@@ -51,4 +51,4 @@ Personalización
 Puedes cambiar las posiciones del auto y del túnel, así como el diseño del semáforo, modificando el código en main.py.
 
 Licencia
-Este proyecto está bajo la licencia MIT — mira el archivo LICENSE para más detalles.
+Este proyecto está bajo la licencia MIT — mira el archivo LICENSE para más detalles ,despues nesesito que colaboren en otra generacion 3D de este juego.
