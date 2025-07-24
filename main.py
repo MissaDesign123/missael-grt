@@ -52,7 +52,7 @@ fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
 
 # Meteoro gráfico
 meteoro_img = pygame.image.load("imgs/obstaculo.png")
-meteoro_img = pygame.transform.scale(meteoro_img, (20, 20))  # Asegúrate de coincidir con el tamaño del Rect
+meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))  # Asegúrate de coincidir con el tamaño del Rect
 
 # Juego
 vidas = 100
