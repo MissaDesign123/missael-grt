@@ -50,6 +50,10 @@ energia = 100
 fondo = pygame.image.load("imgs/fondo.jpg")
 fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
 
+# Meteoro gráfico
+meteoro_img = pygame.image.load("imgs/obstaculo.png")
+meteoro_img = pygame.transform.scale(meteoro_img, (20, 20))  # Asegúrate de coincidir con el tamaño del Rect
+
 # Juego
 vidas = 100
 puntos = 0
@@ -168,12 +172,13 @@ while ejecutando:
     # Crear y mover meteoritos (cuadritos rojos)
     if tiempo_inicio:
         if random.randint(1, 20) == 1:
-            meteorito = pygame.Rect(random.randint(0, ANCHO - 20), 0, 20, 20)
+            meteorito = pygame.Rect(random.randint(0, ANCHO - 20), 0, 40, 40)
             meteoritos.append(meteorito)
-
+           
         for meteorito in meteoritos[:]:
             meteorito.y += velocidad_meteoritos
-            pygame.draw.rect(pantalla, ROJO, meteorito)
+            pantalla.blit(meteoro_img, (meteorito.x, meteorito.y))
+            
             if meteorito.colliderect(jugador_rect):
                 vidas -= 1
                 meteoritos.remove(meteorito)
