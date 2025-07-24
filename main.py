@@ -10,10 +10,10 @@ pygame.display.set_caption("Juego de Carros 2D Terrorífico")
 
 
 # Cargar imágenes
-fondo = pygame.image.load("imgs/fondo.webp")
+fondo = pygame.image.load("imgs/fondo.jpg")
 fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
 
-auto = pygame.image.load("imgs/auto.png")
+auto = pygame.image.load("imgs/auto.jpg")
 auto = pygame.transform.scale(auto, (60, 40))
 
 # Posición inicial
