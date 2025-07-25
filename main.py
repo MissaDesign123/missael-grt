@@ -62,7 +62,7 @@ except:
     jefe_img = None
     tesoro_img = None
     powerup_img = None
-    vida_img = Non
+    vida_img = None
 
 # Cargar sonidos
 try:
