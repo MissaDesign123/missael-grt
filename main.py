@@ -355,9 +355,9 @@ def spawn_enemigos(cantidad, nivel_actual):
         tipos = ["normal"] * 50 + ["resistente"] * 30 + ["jefe"] * 20
     else:
         tipos = ["normal"] * 70 + ["resistente"] * 30
-  
+  #Cantidad de jefes que aparece
     if nivel_actual >= 3:
-        tipos += ["jefe"] * 5
+        tipos += ["jefe"] * 2
         
     for _ in range(cantidad):
         tipo = random.choice(tipos)
