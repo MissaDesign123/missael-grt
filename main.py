@@ -12,7 +12,7 @@ mixer.init()
 # Configuración de pantalla
 ANCHO, ALTO = 1280, 648  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO), pygame.RESIZABLE)  # Permitir redimensionamiento
-pygame.display.set_caption("peleas galácticas entre monstrruos")  # Título de la ventana
+pygame.display.set_caption("galactic monsters")  # Título de la ventana
 FPS = 60 #FPS
 
 # Cargar el icono (asegúrate de que la ruta sea correcta)
@@ -171,7 +171,7 @@ class Jugador:
                 dy = math.sin(angulo) * self.ultima_direccion[0] + math.cos(angulo) * self.ultima_direccion[1]
                 
                 laser = {
-                    "rect": pygame.Rect(self.rect.centerx-4, self.rect.centery-4, 8, 15),  # Más grande
+                    "rect": pygame.Rect(self.rect.centerx-4, self.rect.centery-4, 8,36),  # Más grande
                     "direccion": (dx, dy),
                     "velocidad": 12,  # Más rápido
                     "color": CIAN,  # Color diferente
