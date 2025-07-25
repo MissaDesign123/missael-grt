@@ -746,7 +746,7 @@ if pantalla_inicio():
                     jugador.vidas_max += 10  # Añadir más vida máxima cada 2 niveles
                     jugador.vidas = jugador.vidas_max
                                     
-                mostrar_mensaje(f"Nivel {nivel} completado!", VERDE, 48, 2)
+                mostrar_mensaje(f"Nivel {nivel - 1} completado!", VERDE, 48, 2)
                 mostrar_mensaje(f"Siguiente nivel: {nivel}", AMARILLO, 36, 1, 50)
             else:
                 victoria = True
