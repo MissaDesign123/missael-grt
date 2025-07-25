@@ -352,12 +352,12 @@ def spawn_enemigos(cantidad, nivel_actual):
     
     # Aumenta la probabilidad de enemigos resistentes en niveles altos
     if nivel_actual >= 3:
-        tipos = ["normal"] * 50 + ["resistente"] * 30 + ["jefe"] * 20
+        tipos = ["normal"] * 30 + ["resistente"] * 15 + ["jefe"] * 25
     else:
-        tipos = ["normal"] * 70 + ["resistente"] * 30
+        tipos = ["normal"] * 50 + ["resistente"] * 20
   #Cantidad de jefes que aparece
     if nivel_actual >= 3:
-        tipos += ["jefe"] * 2
+        tipos += ["jefe"] * 3
         
     for _ in range(cantidad):
         tipo = random.choice(tipos)
