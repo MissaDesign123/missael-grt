@@ -143,7 +143,7 @@ class Jugador:
             
         # Regeneración de energía
         if self.energia < self.energia_max:
-            self.energia += 0.29
+            self.energia += 0.25
             
         # Escudo temporal
         if self.escudo_activo and time.time() - self.escudo_duracion > 5:
