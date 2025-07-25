@@ -44,7 +44,7 @@ try:
     nave_img = pygame.image.load("imgs/nave.png")
     nave_img = pygame.transform.scale(nave_img, (60, 60))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
-    enemigo_img = pygame.transform.scale(enemigo_img, (50, 50))
+    enemigo_img = pygame.transform.scale(enemigo_img, (60, 60))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
     tesoro_img = pygame.image.load("imgs/tesoro.png")
