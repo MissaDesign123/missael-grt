@@ -144,7 +144,7 @@ class Jugador:
             
         # Regeneración de energía
         if self.energia < self.energia_max:
-            self.energia += 0.1
+            self.energia += 0.29
             
         # Escudo temporal
         if self.escudo_activo and time.time() - self.escudo_duracion > 5:
@@ -712,8 +712,6 @@ if pantalla_inicio():
             enemigos.append(Enemigo(ANCHO//2, -100, "jefe", nivel))
             enemigos_restantes += 1
             mostrar_mensaje("¡VIENE EL JEFE!", ROJO, 48, 2)
-            
-        #print(f"Puntos: {jugador.puntos}, Objetivo: {puntos_objetivo}, Enemigos restantes: {enemigos_restantes}, Jefe derrotado: {jefe_derrotado}")
         
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
