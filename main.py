@@ -10,9 +10,10 @@ pygame.init()
 mixer.init()
 
 # Configuración de pantalla
-ANCHO, ALTO = 1024, 768  # Pantalla más grande
+ANCHO, ALTO = 1024, 700  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Galactic Treasure Hunter")
+FPS = 70 #FPS
 
 # Crear directorio de imágenes si no existe
 if not os.path.exists('imgs'):
@@ -41,15 +42,15 @@ try:
     meteoro_img = pygame.image.load("imgs/obstaculo.png")
     meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))
     nave_img = pygame.image.load("imgs/nave.png")
-    nave_img = pygame.transform.scale(nave_img, (40, 40))
+    nave_img = pygame.transform.scale(nave_img, (60, 60))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
     enemigo_img = pygame.transform.scale(enemigo_img, (40, 40))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
     tesoro_img = pygame.image.load("imgs/tesoro.png")
-    tesoro_img = pygame.transform.scale(tesoro_img, (30, 30))
+    tesoro_img = pygame.transform.scale(tesoro_img, (55, 55))
     powerup_img = pygame.image.load("imgs/powerup.png")
-    powerup_img = pygame.transform.scale(powerup_img, (25, 25))
+    powerup_img = pygame.transform.scale(powerup_img, (35, 35))
 except:
     # Si no hay imágenes, usaremos formas geométricas
     fondo = None
@@ -62,11 +63,11 @@ except:
 
 # Cargar sonidos
 try:
-    sonido_laser = mixer.Sound("sounds/laser.wav")
-    sonido_explosion = mixer.Sound("sounds/explosion.wav")
-    sonido_tesoro = mixer.Sound("sounds/tesoro.wav")
-    sonido_powerup = mixer.Sound("sounds/powerup.wav")
-    sonido_dano = mixer.Sound("sounds/dano.wav")
+    sonido_laser = mixer.Sound("sounds/laser.mp3")
+    sonido_explosion = mixer.Sound("sounds/explosion.mp3")
+    sonido_tesoro = mixer.Sound("sounds/tesoro.mp3")
+    sonido_powerup = mixer.Sound("sounds/powerup.mp3")
+    sonido_dano = mixer.Sound("sounds/dano.mp3")
 except:
     # Si no hay sonidos, los desactivamos
     sonido_laser = None
@@ -80,10 +81,11 @@ class Jugador:
     def __init__(self):
         self.rect = pygame.Rect(ANCHO//2, ALTO//2, 40, 40)
         self.velocidad = 5
-        self.vidas = 100
-        self.vidas_max = 100
         self.puntos = 0
-        self.energia = 100
+        #self.vidas = 100
+        self.vidas = 30         
+        self.vidas_max = 30
+        self.energia = 100     
         self.energia_max = 100
         self.invulnerable = False
         self.tiempo_invulnerable = 0
@@ -96,6 +98,7 @@ class Jugador:
         self.escudo_duracion = 0
         self.disparo_cooldown = 0
         self.sprite = nave_img
+        self.ultima_direccion = (0, -1)  # Por defecto hacia arriba
         
     def mover(self, dx, dy):
         self.rect.x += dx * self.velocidad
@@ -104,6 +107,9 @@ class Jugador:
         self.rect.x = max(0, min(ANCHO - self.rect.width, self.rect.x))
         self.rect.y = max(0, min(ALTO - self.rect.height, self.rect.y))
         
+        if dx != 0 or dy != 0:
+            self.ultima_direccion = (dx, dy)
+            
     def dibujar(self, pantalla):
         if self.sprite:
             pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
@@ -142,24 +148,24 @@ class Jugador:
             self.escudo_activo = False
 
 class Enemigo:
-    def __init__(self, x, y, tipo="normal"):
+    def __init__(self, x, y, tipo="normal", nivel=1):
         self.tipo = tipo
         if tipo == "normal":
             self.rect = pygame.Rect(x, y, 40, 40)
-            self.velocidad = 2
+            self.velocidad = 2 + nivel * 0.1  # Aumenta velocidad por nivel
             self.vida = 1
             self.color = MORADO
             self.sprite = enemigo_img
         elif tipo == "rapido":
             self.rect = pygame.Rect(x, y, 30, 30)
-            self.velocidad = 4
+            self.velocidad = 4 + nivel * 0.15
             self.vida = 1
             self.color = ROSA
             self.sprite = None
         elif tipo == "resistente":
             self.rect = pygame.Rect(x, y, 50, 50)
-            self.velocidad = 1.5
-            self.vida = 3
+            self.velocidad = 1.5 + nivel * 0.1
+            self.vida = 3 + nivel // 2  # Más vida en niveles altos
             self.color = NARANJA
             self.sprite = None
         elif tipo == "jefe":
@@ -288,7 +294,7 @@ class EfectoParticula:
         for p in self.particulas[:]:
             p["x"] += p["dx"]
             p["y"] += p["dy"]
-            p["tiempo"] += 0.016  # ~60 FPS
+            p["tiempo"] += (1/FPS)  
             if p["tiempo"] >= p["vida"]:
                 self.particulas.remove(p)
                 
@@ -314,7 +320,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 5
+puntos_objetivo = 50 + (nivel * 2)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
@@ -344,7 +350,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     tipos = ["normal"] * 70 + ["rapido"] * 20 + ["resistente"] * 10
     if nivel_actual >= 3:
         tipos += ["jefe"] * 5
-    
+
     for _ in range(cantidad):
         tipo = random.choice(tipos)
         if tipo == "jefe" and nivel_actual < 3:
@@ -359,8 +365,10 @@ def spawn_enemigos(cantidad, nivel_actual):
             y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
             
         enemigos.append(Enemigo(x, y, tipo))
-        enemigos_restantes += 1
-
+          
+    # Actualizar enemigos_restantes SOLO al inicio del nivel
+    if tiempo_inicio_nivel is None:
+        enemigos_restantes = cantidad
 def spawn_objeto_especial(tipo=None):
     if not tipo:
         tipos = ["tesoro"] * 70 + ["powerup"] * 20 + ["vida"] * 10
@@ -507,7 +515,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 5
+    puntos_objetivo = 50
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
@@ -524,46 +532,38 @@ if pantalla_inicio():
     reloj = pygame.time.Clock()
     
     while ejecutando:
-        reloj.tick(60)  # 60 FPS
+        reloj.tick(FPS) 
         
         # Manejo de eventos
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 ejecutando = False
             elif evento.type == pygame.KEYDOWN:
+                
                 if evento.key == pygame.K_p and not game_over and not victoria:
                     if not pantalla_pausa():
                         ejecutando = False
-                elif evento.key == pygame.K_f and jugador.energia >= 10 and jugador.disparo_cooldown <= 0:
-                    # Disparo normal
-                    laser = {
-                        "rect": pygame.Rect(jugador.rect.centerx-2, jugador.rect.top-10, 4, 10),
-                        "direccion": (0, -1),
-                        "velocidad": 10,
-                        "color": AZUL,
-                        "daño": 1
-                    }
-                    lasers_jugador.append(laser)
-                    jugador.energia -= 10
-                    jugador.disparo_cooldown = 5 if jugador.poderes["disparo_rapido"] else 10
-                    if sonido_laser:
-                        sonido_laser.play()
-                elif evento.key == pygame.K_r and jugador.poderes["mega_laser"] and jugador.energia >= 30:
-                    # Mega láser
-                    for angulo in range(-30, 31, 15):
-                        rad = math.radians(angulo)
+                elif evento.key == pygame.K_f and jugador.energia >= 10:
+                    # Disparar 3 láseres en un pequeño abanico
+                    for i in range(-1, 4):  # Esto creará la cantidad de disparos 
+                        angulo = math.radians(i * 35)  # Pequeña desviación de 20 grados para cada láser
+                        dx = math.cos(angulo) * jugador.ultima_direccion[0] - math.sin(angulo) * jugador.ultima_direccion[1]
+                        dy = math.sin(angulo) * jugador.ultima_direccion[0] + math.cos(angulo) * jugador.ultima_direccion[1]
+                        
                         laser = {
-                            "rect": pygame.Rect(jugador.rect.centerx-3, jugador.rect.top-20, 6, 20),
-                            "direccion": (math.sin(rad), math.cos(rad + math.pi)),
-                            "velocidad": 8,
-                            "color": CIAN,
-                            "daño": 2
+                            "rect": pygame.Rect(jugador.rect.centerx-2, jugador.rect.centery-2, 4, 10),
+                            "direccion": (dx, dy),
+                            "velocidad": 10,
+                            "color": AZUL,
+                            "daño": 1
                         }
+                        
                         lasers_jugador.append(laser)
-                    jugador.energia -= 30
+                    
+                    jugador.energia -= 5  # Coste de energía por el conjunto de disparos
+                    #jugador.disparo_cooldown = 3
                     if sonido_laser:
                         sonido_laser.play()
-        
         if pausado or game_over or victoria:
             continue
         
@@ -588,10 +588,16 @@ if pantalla_inicio():
             spawn_enemigos(5 + nivel * 2, nivel)
         
         # Spawn de enemigos periódico
-        spawn_timer += 1/60
-        if spawn_timer >= 10 and enemigos_restantes > 0:  # Cada 10 segundos
+        spawn_timer += 1/FPS
+        if spawn_timer >= 3:  
             spawn_timer = 0
-            spawn_enemigos(min(3, enemigos_restantes), nivel)
+            
+        # Spawnear siempre un mínimo de enemigos, independientemente de enemigos_restantes
+            spawn_cantidad = min(3 + nivel, 8)  # Entre 3 y 8 enemigos según nivel
+            spawn_enemigos(spawn_cantidad, nivel)
+            
+            if enemigos_restantes > 0:
+                spawn_enemigos(min(5, enemigos_restantes), nivel)
         
         # Spawn de tesoros y power-ups
         if time.time() - tiempo_ultimo_tesoro > 5:  # Cada 5 segundos
@@ -620,6 +626,7 @@ if pantalla_inicio():
                         enemigos.remove(enemigo)
                         enemigos_restantes -= 1
                         jugador.puntos += 1 if enemigo.tipo != "jefe" else 5
+                        
                         explosiones.append(EfectoParticula(
                             enemigo.rect.centerx, enemigo.rect.centery,
                             enemigo.color, 30, 4
@@ -696,30 +703,48 @@ if pantalla_inicio():
             if not efecto.particulas:
                 efectos_particulas.remove(efecto)
         
-        # Verificar si aparecer jefe (a mitad del nivel)
+       # Modificar la condición de aparición del jefe:
         if not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
             jefe_aparecido = True
-            enemigos.append(Enemigo(ANCHO//2, -100, "jefe"))
+            enemigos.append(Enemigo(ANCHO//2, -100, "jefe", nivel))
             enemigos_restantes += 1
-            mostrar_mensaje("¡JEFE INCOMING!", ROJO, 48, 2)
+            mostrar_mensaje("¡VIENE EL JEFE!", ROJO, 48, 2)
+            
+        #print(f"Puntos: {jugador.puntos}, Objetivo: {puntos_objetivo}, Enemigos restantes: {enemigos_restantes}, Jefe derrotado: {jefe_derrotado}")
         
         # Verificar fin de nivel
-        if jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido or jefe_derrotado:
-            if nivel < 5:  # Máximo 5 niveles
+        if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
+            if nivel < 5:
                 nivel += 1
-                puntos_objetivo += 5
+                puntos_objetivo += 15
+                # Limpiar todo
+                enemigos.clear()
+                lasers_enemigos.clear()
+                lasers_jugador.clear()
+                objetos_especiales.clear()
+                efectos_particulas.clear()
+                
+                # Reiniciar variables
                 tiempo_inicio_nivel = None
+                enemigos_restantes = 5 + nivel * 2  # Cantidad inicial basada en nivel
+                spawn_timer = 0
                 jefe_aparecido = False
                 jefe_derrotado = False
-                spawn_timer = 0
+                tiempo_ultimo_tesoro = time.time()
                 
-                # Mejorar jugador entre niveles
+                # Spawn inicial de enemigos
+                spawn_enemigos(5 + nivel * 2, nivel)
+                
+                #Mejorar jugador entre niveles
                 jugador.vidas = jugador.vidas_max
                 jugador.energia = jugador.energia_max
+                
                 if nivel % 2 == 0:
                     jugador.velocidad += 0.5
-                    jugador.energia_max += 10
-                
+                    jugador.energia_max += 20
+                    jugador.vidas_max += 10  # Añadir más vida máxima cada 2 niveles
+                    jugador.vidas = jugador.vidas_max
+                                    
                 mostrar_mensaje(f"Nivel {nivel} completado!", VERDE, 48, 2)
                 mostrar_mensaje(f"Siguiente nivel: {nivel}", AMARILLO, 36, 1, 50)
             else:
