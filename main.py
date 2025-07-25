@@ -50,7 +50,9 @@ try:
     tesoro_img = pygame.image.load("imgs/tesoro.png")
     tesoro_img = pygame.transform.scale(tesoro_img, (55, 55))
     powerup_img = pygame.image.load("imgs/powerup.png")
-    powerup_img = pygame.transform.scale(powerup_img, (35, 35))
+    powerup_img = pygame.transform.scale(powerup_img, (45, 45))
+    vida_img = pygame.image.load("imgs/vida.png") 
+    vida_img = pygame.transform.scale(vida_img, (65, 65)) 
 except:
     # Si no hay imágenes, usaremos formas geométricas
     fondo = None
@@ -60,6 +62,7 @@ except:
     jefe_img = None
     tesoro_img = None
     powerup_img = None
+    vida_img = Non
 
 # Cargar sonidos
 try:
@@ -251,7 +254,7 @@ class ObjetoEspecial:
             self.tipo_powerup = random.choice(["disparo_rapido", "mega_laser", "escudo"])
         elif tipo == "vida":
             self.color = ROJO
-            self.sprite = None
+            self.sprite = vida_img  # Usar la imagen de vida (o None si no existe)
             self.valor = 20
             
     def dibujar(self, pantalla):
@@ -259,7 +262,7 @@ class ObjetoEspecial:
             pantalla.blit(self.sprite, (self.rect.topleft))
         else:
             pygame.draw.rect(pantalla, self.color, self.rect)
-            
+        
         # Mostrar tiempo restante
         tiempo_restante = self.tiempo_vida - (time.time() - self.tiempo_creacion)
         if tiempo_restante < 3:  # Parpadea los últimos 3 segundos
