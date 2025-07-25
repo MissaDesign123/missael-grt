@@ -21,8 +21,7 @@ try:
     pygame.display.set_icon(icono)  # Establecer el icono
 except:
     print("No se pudo cargar el icono. Se usará el predeterminado.")
-    
-
+   
 # Crear directorio de imágenes si no existe
 if not os.path.exists('imgs'):
     os.makedirs('imgs')
@@ -53,6 +52,10 @@ try:
     nave_img = pygame.transform.scale(nave_img, (60, 60))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
     enemigo_img = pygame.transform.scale(enemigo_img, (60, 60))
+    enemigo_2_img = pygame.image.load("imgs/enemigo_2.png")
+    enemigo_2_img = pygame.transform.scale(enemigo_2_img, (60, 60))
+    enemigo_3_img = pygame.image.load("imgs/enemigo_3.png")
+    enemigo_3_img = pygame.transform.scale(enemigo_3_img, (60, 60))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
     tesoro_img = pygame.image.load("imgs/tesoro.png")
@@ -187,21 +190,21 @@ class Enemigo:
         if tipo == "normal":
             self.rect = pygame.Rect(x, y, 40, 40)
             self.velocidad = 2 + nivel * 0.1  # Aumenta velocidad por nivel
-            self.vida = 1
+            self.vida = 2
             self.color = MORADO
             self.sprite = enemigo_img
         elif tipo == "rapido":
             self.rect = pygame.Rect(x, y, 30, 30)
             self.velocidad = 4 + nivel * 0.15
-            self.vida = 1
+            self.vida = 3
             self.color = ROSA
-            self.sprite = None
+            self.sprite = enemigo_2_img
         elif tipo == "resistente":
             self.rect = pygame.Rect(x, y, 50, 50)
             self.velocidad = 1.5 + nivel * 0.1
-            self.vida = 3 + nivel // 2  # Más vida en niveles altos
+            self.vida = 5 + nivel // 2  # Más vida en niveles altos
             self.color = NARANJA
-            self.sprite = None
+            self.sprite = enemigo_3_img
         elif tipo == "jefe":
             self.rect = pygame.Rect(x, y, 80, 80)
             self.velocidad = 1
