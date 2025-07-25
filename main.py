@@ -15,6 +15,14 @@ pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Galactic Treasure Hunter")
 FPS = 60 #FPS
 
+# Cargar el icono (asegúrate de que la ruta sea correcta)
+try:
+    icono = pygame.image.load("imgs/icono.png")  # o .ico
+    pygame.display.set_icon(icono)  # Establecer el icono
+except:
+    print("No se pudo cargar el icono. Se usará el predeterminado.")
+    
+
 # Crear directorio de imágenes si no existe
 if not os.path.exists('imgs'):
     os.makedirs('imgs')
