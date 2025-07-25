@@ -13,7 +13,7 @@ mixer.init()
 ANCHO, ALTO = 1024, 700  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Galactic Treasure Hunter")
-FPS = 70 #FPS
+FPS = 60 #FPS
 
 # Crear directorio de imágenes si no existe
 if not os.path.exists('imgs'):
