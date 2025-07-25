@@ -2,13 +2,24 @@ import pygame
 import random
 import time
 import math
+import os
+from pygame import mixer
 
+# Inicialización de pygame y mixer para sonidos
 pygame.init()
+mixer.init()
 
-# Configuración
-ANCHO, ALTO = 800, 600
+# Configuración de pantalla
+ANCHO, ALTO = 1024, 768  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Juego de Tesoros")
+pygame.display.set_caption("Galactic Treasure Hunter")
+
+# Crear directorio de imágenes si no existe
+if not os.path.exists('imgs'):
+    os.makedirs('imgs')
+    
+if not os.path.exists('sounds'):
+    os.makedirs('sounds')
 
 # Colores
 NEGRO = (0, 0, 0)
@@ -19,236 +30,752 @@ AZUL = (0, 0, 255)
 CIAN = (0, 255, 255)
 MORADO = (128, 0, 128)
 VERDE = (0, 255, 0)
+AMARILLO = (255, 255, 0)
+NARANJA = (255, 165, 0)
+ROSA = (255, 105, 180)
 
-# Jugador
-x, y = 400, 300
-velocidad = 5
-jugador_rect = pygame.Rect(x, y, 12, 12)
+# Cargar imágenes (asumiendo que existen estos archivos en imgs/)
+try:
+    fondo = pygame.image.load("imgs/fondo.jpg")
+    fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
+    meteoro_img = pygame.image.load("imgs/obstaculo.png")
+    meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))
+    nave_img = pygame.image.load("imgs/nave.png")
+    nave_img = pygame.transform.scale(nave_img, (40, 40))
+    enemigo_img = pygame.image.load("imgs/enemigo.png")
+    enemigo_img = pygame.transform.scale(enemigo_img, (40, 40))
+    jefe_img = pygame.image.load("imgs/jefe.png")
+    jefe_img = pygame.transform.scale(jefe_img, (80, 80))
+    tesoro_img = pygame.image.load("imgs/tesoro.png")
+    tesoro_img = pygame.transform.scale(tesoro_img, (30, 30))
+    powerup_img = pygame.image.load("imgs/powerup.png")
+    powerup_img = pygame.transform.scale(powerup_img, (25, 25))
+except:
+    # Si no hay imágenes, usaremos formas geométricas
+    fondo = None
+    meteoro_img = None
+    nave_img = None
+    enemigo_img = None
+    jefe_img = None
+    tesoro_img = None
+    powerup_img = None
 
-# Enemigos
-enemigo = None
-enemigo_lasers = []
-velocidad_enemigo = 2
+# Cargar sonidos
+try:
+    sonido_laser = mixer.Sound("imgs/laser.wav")
+    sonido_explosion = mixer.Sound("imgs/explosion.wav")
+    sonido_tesoro = mixer.Sound("imgs/tesoro.wav")
+    sonido_powerup = mixer.Sound("imgs/powerup.wav")
+    sonido_dano = mixer.Sound("imgs/dano.wav")
+except:
+    # Si no hay sonidos, los desactivamos
+    sonido_laser = None
+    sonido_explosion = None
+    sonido_tesoro = None
+    sonido_powerup = None
+    sonido_dano = None
 
-meteoritos = []
-velocidad_meteoritos = 2
-
-# Tesoros
-tesoro = None
-mostrar_tesoro = False
-tiempo_ultimo_tesoro = 0
-esperar_un_segundo = False
-jugador_se_movio = False
-
-# Láseres jugador
-lazers = []
-mega_lasers = []
-usar_poder_r = False
-energia = 100
-
-# Fondo
-fondo = pygame.image.load("imgs/fondo.jpg")
-fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
-
-# Meteoro gráfico
-meteoro_img = pygame.image.load("imgs/obstaculo.png")
-meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))  # Asegúrate de coincidir con el tamaño del Rect
-
-# Juego
-vidas = 100
-puntos = 0
-puntos_objetivo = 5
-nivel = 1
-nivel_terminado = False
-tiempo_inicio = None
-
-fuente = pygame.font.SysFont(None, 36)
-
-reloj = pygame.time.Clock()
-ejecutando = True
-
-def mover_enemigo_hacia_jugador(enemigo_rect, jugador_rect, velocidad):
-    # Calcula vector hacia jugador
-    dx = jugador_rect.centerx - enemigo_rect.centerx
-    dy = jugador_rect.centery - enemigo_rect.centery
-    distancia = math.hypot(dx, dy)
-    if distancia == 0:
-        return enemigo_rect  # No se mueve si está en la misma posición
-    dx_norm = dx / distancia
-    dy_norm = dy / distancia
-    enemigo_rect.x += int(dx_norm * velocidad)
-    enemigo_rect.y += int(dy_norm * velocidad)
-    return enemigo_rect
-
-while ejecutando:
-    reloj.tick(60)
-    pantalla.blit(fondo, (0, 0))
-
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            ejecutando = False
-
-    teclas = pygame.key.get_pressed()
-    dx = dy = 0
-    if teclas[pygame.K_LEFT]:
-        dx = -velocidad
-    if teclas[pygame.K_RIGHT]:
-        dx = velocidad
-    if teclas[pygame.K_UP]:
-        dy = -velocidad
-    if teclas[pygame.K_DOWN]:
-        dy = velocidad
-    if teclas[pygame.K_f] and energia >= 10:
-        laser = pygame.Rect(jugador_rect.centerx - 2, jugador_rect.y - 10, 4, 10)
-        lazers.append(laser)
-        energia -= 10
-    if teclas[pygame.K_r] and usar_poder_r and energia >= 20:
-        if enemigo:
-            mega_laser = pygame.Rect(jugador_rect.centerx - 5, jugador_rect.y - 60, 10, 60)
-            mega_lasers.append(mega_laser)
-            usar_poder_r = False
-            energia -= 20
-
-    if dx != 0 or dy != 0:
-        jugador_rect.x += dx
-        jugador_rect.y += dy
-        jugador_se_movio = True
-
-    # Limitar jugador a pantalla
-    jugador_rect.x = max(0, min(ANCHO - jugador_rect.width, jugador_rect.x))
-    jugador_rect.y = max(0, min(ALTO - jugador_rect.height, jugador_rect.y))
-
-    if jugador_se_movio and not mostrar_tesoro:
-        if not esperar_un_segundo:
-            tiempo_ultimo_tesoro = time.time()
-            esperar_un_segundo = True
-        elif time.time() - tiempo_ultimo_tesoro >= 1:
-            tesoro = pygame.Rect(random.randint(0, ANCHO - 20), random.randint(0, ALTO - 20), 20, 20)
-            mostrar_tesoro = True
-            esperar_un_segundo = False
-
-    if mostrar_tesoro and tesoro:
-        pygame.draw.rect(pantalla, DORADO, tesoro)
-        if jugador_rect.colliderect(tesoro):
-            puntos += 1
-            mostrar_tesoro = False
-            jugador_se_movio = False
-            tesoro = None
-            energia = min(100, energia + 15)
-            if puntos == 2:
-                usar_poder_r = True
-
-    pygame.draw.rect(pantalla, ROJO, jugador_rect)
-
-    # Aparecer enemigo único si el jugador se movió y no existe
-    if jugador_se_movio and enemigo is None:
-        enemigo = pygame.Rect(random.randint(0, ANCHO - 40), 0, 40, 40)
-
-    # Mover enemigo persiguiendo jugador
-    if enemigo:
-        enemigo = mover_enemigo_hacia_jugador(enemigo, jugador_rect, velocidad_enemigo)
-        pygame.draw.rect(pantalla, MORADO, enemigo)
-
-        # Enemigo dispara láseres aleatoriamente
-        if random.randint(1, 100) == 1:
-            laser_e = pygame.Rect(enemigo.centerx - 2, enemigo.y + 40, 4, 10)
-            enemigo_lasers.append(laser_e)
-
-        # Mover y dibujar láseres enemigo
-        for laser_e in enemigo_lasers[:]:
-            laser_e.y += 7
-            pygame.draw.rect(pantalla, MORADO, laser_e)
-            if laser_e.y > ALTO:
-                enemigo_lasers.remove(laser_e)
-            elif laser_e.colliderect(jugador_rect):
-                vidas -= 5
-                enemigo_lasers.remove(laser_e)
-
-        if enemigo.colliderect(jugador_rect):
-            vidas -= 10
-            enemigo = None
-            enemigo_lasers.clear()
-
-    # Crear y mover meteoritos (cuadritos rojos)
-    if tiempo_inicio:
-        if random.randint(1, 20) == 1:
-            meteorito = pygame.Rect(random.randint(0, ANCHO - 20), 0, 40, 40)
-            meteoritos.append(meteorito)
-           
-        for meteorito in meteoritos[:]:
-            meteorito.y += velocidad_meteoritos
-            pantalla.blit(meteoro_img, (meteorito.x, meteorito.y))
+# Clases para organizar mejor el código
+class Jugador:
+    def __init__(self):
+        self.rect = pygame.Rect(ANCHO//2, ALTO//2, 40, 40)
+        self.velocidad = 5
+        self.vidas = 100
+        self.vidas_max = 100
+        self.puntos = 0
+        self.energia = 100
+        self.energia_max = 100
+        self.invulnerable = False
+        self.tiempo_invulnerable = 0
+        self.poderes = {
+            "disparo_rapido": False,
+            "mega_laser": False,
+            "escudo": False
+        }
+        self.escudo_activo = False
+        self.escudo_duracion = 0
+        self.disparo_cooldown = 0
+        self.sprite = nave_img
+        
+    def mover(self, dx, dy):
+        self.rect.x += dx * self.velocidad
+        self.rect.y += dy * self.velocidad
+        # Limitar a pantalla
+        self.rect.x = max(0, min(ANCHO - self.rect.width, self.rect.x))
+        self.rect.y = max(0, min(ALTO - self.rect.height, self.rect.y))
+        
+    def dibujar(self, pantalla):
+        if self.sprite:
+            pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
+        else:
+            color = CIAN if self.invulnerable else AZUL
+            pygame.draw.rect(pantalla, color, self.rect)
             
-            if meteorito.colliderect(jugador_rect):
-                vidas -= 1
-                meteoritos.remove(meteorito)
-            elif meteorito.y > ALTO:
-                meteoritos.remove(meteorito)
+        if self.escudo_activo:
+            pygame.draw.circle(pantalla, CIAN, self.rect.center, 30, 2)
+            
+    def recibir_dano(self, cantidad):
+        if not self.invulnerable and not self.escudo_activo:
+            self.vidas -= cantidad
+            self.invulnerable = True
+            self.tiempo_invulnerable = time.time()
+            if sonido_dano:
+                sonido_dano.play()
+            return True
+        return False
+        
+    def actualizar(self):
+        # Cooldown de disparo
+        if self.disparo_cooldown > 0:
+            self.disparo_cooldown -= 1
+            
+        # Invulnerabilidad después de daño
+        if self.invulnerable and time.time() - self.tiempo_invulnerable > 1:
+            self.invulnerable = False
+            
+        # Regeneración de energía
+        if self.energia < self.energia_max:
+            self.energia += 0.1
+            
+        # Escudo temporal
+        if self.escudo_activo and time.time() - self.escudo_duracion > 5:
+            self.escudo_activo = False
 
-    for laser in lazers[:]:
-        laser.y -= 10
-        pygame.draw.rect(pantalla, AZUL, laser)
-        if laser.y < 0:
-            lazers.remove(laser)
-        elif enemigo and laser.colliderect(enemigo):
-            enemigo = None
-            lazers.remove(laser)
-            enemigo_lasers.clear()
+class Enemigo:
+    def __init__(self, x, y, tipo="normal"):
+        self.tipo = tipo
+        if tipo == "normal":
+            self.rect = pygame.Rect(x, y, 40, 40)
+            self.velocidad = 2
+            self.vida = 1
+            self.color = MORADO
+            self.sprite = enemigo_img
+        elif tipo == "rapido":
+            self.rect = pygame.Rect(x, y, 30, 30)
+            self.velocidad = 4
+            self.vida = 1
+            self.color = ROSA
+            self.sprite = None
+        elif tipo == "resistente":
+            self.rect = pygame.Rect(x, y, 50, 50)
+            self.velocidad = 1.5
+            self.vida = 3
+            self.color = NARANJA
+            self.sprite = None
+        elif tipo == "jefe":
+            self.rect = pygame.Rect(x, y, 80, 80)
+            self.velocidad = 1
+            self.vida = 10
+            self.color = ROJO
+            self.sprite = jefe_img
+            self.patron_movimiento = 0
+            self.tiempo_ultimo_disparo = 0
+            
+    def mover_hacia(self, objetivo_rect):
+        if self.tipo == "jefe":
+            # Movimiento especial para el jefe
+            self.patron_movimiento += 0.02
+            self.rect.x = ANCHO//2 + math.sin(self.patron_movimiento) * 300
+            self.rect.y = 100 + math.cos(self.patron_movimiento * 0.5) * 50
+        else:
+            # Movimiento normal hacia el jugador
+            dx = objetivo_rect.centerx - self.rect.centerx
+            dy = objetivo_rect.centery - self.rect.centery
+            distancia = math.hypot(dx, dy)
+            if distancia > 0:
+                dx_norm = dx / distancia
+                dy_norm = dy / distancia
+                self.rect.x += int(dx_norm * self.velocidad)
+                self.rect.y += int(dy_norm * self.velocidad)
+                
+    def disparar(self, objetivo_rect):
+        if self.tipo == "jefe" and time.time() - self.tiempo_ultimo_disparo > 2:
+            self.tiempo_ultimo_disparo = time.time()
+            lasers = []
+            # Disparo en patrón del jefe
+            for angulo in range(0, 360, 45):
+                rad = math.radians(angulo)
+                laser = {
+                    "rect": pygame.Rect(self.rect.centerx-3, self.rect.centery-3, 6, 6),
+                    "direccion": (math.sin(rad), math.cos(rad)),
+                    "velocidad": 5,
+                    "color": ROJO
+                }
+                lasers.append(laser)
+            return lasers
+        elif random.randint(1, 100) == 1:
+            laser = {
+                "rect": pygame.Rect(self.rect.centerx-2, self.rect.bottom, 4, 10),
+                "direccion": (0, 1),
+                "velocidad": 5,
+                "color": self.color
+            }
+            return [laser]
+        return []
+        
+    def dibujar(self, pantalla):
+        if self.sprite:
+            pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
+        else:
+            pygame.draw.rect(pantalla, self.color, self.rect)
+            
+        # Barra de vida para enemigos resistentes y jefes
+        if self.tipo in ["resistente", "jefe"]:
+            ancho_barra = 40 if self.tipo == "resistente" else 80
+            vida_porcentaje = self.vida / (3 if self.tipo == "resistente" else 10)
+            pygame.draw.rect(pantalla, ROJO, (self.rect.x, self.rect.y - 10, ancho_barra, 5))
+            pygame.draw.rect(pantalla, VERDE, (self.rect.x, self.rect.y - 10, ancho_barra * vida_porcentaje, 5))
 
-    for mlaser in mega_lasers[:]:
-        mlaser.y -= 15
-        pygame.draw.rect(pantalla, CIAN, mlaser)
-        if mlaser.y < 0:
-            mega_lasers.remove(mlaser)
-        elif enemigo and mlaser.colliderect(enemigo):
-            enemigo = None
-            mega_lasers.remove(mlaser)
-            enemigo_lasers.clear()
+class ObjetoEspecial:
+    def __init__(self, tipo, x=None, y=None):
+        self.tipo = tipo  # "tesoro", "powerup", "vida"
+        self.rect = pygame.Rect(x or random.randint(0, ANCHO-30), 
+                               y or random.randint(0, ALTO-30), 
+                               30, 30)
+        self.tiempo_vida = 10  # Segundos antes de desaparecer
+        self.tiempo_creacion = time.time()
+        
+        if tipo == "tesoro":
+            self.color = DORADO
+            self.sprite = tesoro_img
+            self.valor = 1
+        elif tipo == "powerup":
+            self.color = VERDE
+            self.sprite = powerup_img
+            self.tipo_powerup = random.choice(["disparo_rapido", "mega_laser", "escudo"])
+        elif tipo == "vida":
+            self.color = ROJO
+            self.sprite = None
+            self.valor = 20
+            
+    def dibujar(self, pantalla):
+        if self.sprite:
+            pantalla.blit(self.sprite, (self.rect.topleft))
+        else:
+            pygame.draw.rect(pantalla, self.color, self.rect)
+            
+        # Mostrar tiempo restante
+        tiempo_restante = self.tiempo_vida - (time.time() - self.tiempo_creacion)
+        if tiempo_restante < 3:  # Parpadea los últimos 3 segundos
+            if int(tiempo_restante * 2) % 2 == 0:  # Parpadeo
+                if self.sprite:
+                    pantalla.blit(self.sprite, (self.rect.topleft))
+                else:
+                    pygame.draw.rect(pantalla, self.color, self.rect)
+                    
+    def esta_vivo(self):
+        return time.time() - self.tiempo_creacion < self.tiempo_vida
 
-    # Iniciar tiempo cuando el jugador se mueve
-    if jugador_se_movio and tiempo_inicio is None:
-        tiempo_inicio = time.time()
+class EfectoParticula:
+    def __init__(self, x, y, color, cantidad=20, tamaño=3):
+        self.particulas = []
+        for _ in range(cantidad):
+            velocidad = random.uniform(1, 5)
+            angulo = random.uniform(0, math.pi*2)
+            vida = random.uniform(0.5, 1.5)
+            self.particulas.append({
+                "x": x,
+                "y": y,
+                "dx": math.cos(angulo) * velocidad,
+                "dy": math.sin(angulo) * velocidad,
+                "vida": vida,
+                "tamaño": tamaño,
+                "color": color,
+                "tiempo": 0
+            })
+            
+    def actualizar(self):
+        for p in self.particulas[:]:
+            p["x"] += p["dx"]
+            p["y"] += p["dy"]
+            p["tiempo"] += 0.016  # ~60 FPS
+            if p["tiempo"] >= p["vida"]:
+                self.particulas.remove(p)
+                
+    def dibujar(self, pantalla):
+        for p in self.particulas:
+            alpha = 255 * (1 - p["tiempo"]/p["vida"])
+            color = list(p["color"])
+            if len(color) == 3:
+                color.append(alpha)
+            superficie = pygame.Surface((p["tamaño"]*2, p["tamaño"]*2), pygame.SRCALPHA)
+            pygame.draw.circle(superficie, color, (p["tamaño"], p["tamaño"]), p["tamaño"])
+            pantalla.blit(superficie, (p["x"] - p["tamaño"], p["y"] - p["tamaño"]))
 
-    # HUD
-    texto_vidas = fuente.render(f"Vidas: {vidas}/100", True, BLANCO)
-    texto_puntos = fuente.render(f"Puntos: {puntos}/{puntos_objetivo}", True, BLANCO)
-    texto_nivel = fuente.render(f"Nivel: {nivel}", True, BLANCO)
-    texto_energia = fuente.render(f"Energía: {energia}/100", True, VERDE)
-    pantalla.blit(texto_vidas, (10, 10))
-    pantalla.blit(texto_puntos, (10, 40))
-    pantalla.blit(texto_nivel, (10, 70))
-    pantalla.blit(texto_energia, (10, 100))
+# Inicialización de objetos del juego
+jugador = Jugador()
+enemigos = []
+objetos_especiales = []
+lasers_jugador = []
+lasers_enemigos = []
+meteoritos = []
+efectos_particulas = []
+explosiones = []
 
-    if usar_poder_r:
-        texto_r = fuente.render("¡Poder desbloqueado! Presiona R", True, DORADO)
-        pantalla.blit(texto_r, (10, 130))
+# Variables de juego
+nivel = 1
+puntos_objetivo = 5
+tiempo_inicio_nivel = None
+enemigos_restantes = 0
+spawn_timer = 0
+jefe_aparecido = False
+jefe_derrotado = False
+tiempo_ultimo_tesoro = 0
+pausado = False
+game_over = False
+victoria = False
 
-    if puntos >= puntos_objetivo and not nivel_terminado:
-        texto_ganar = fuente.render("¡HAS GANADO!", True, VERDE)
-        pantalla.blit(texto_ganar, (ANCHO // 2 - 100, ALTO // 2))
-        pygame.display.update()
-        pygame.time.delay(2000)
-        nivel += 1
-        puntos = 0
-        puntos_objetivo += 5
-        velocidad_enemigo += 1
-        velocidad_meteoritos += 1
-        enemigo = None
-        enemigo_lasers.clear()
-        meteoritos.clear()
-        mostrar_tesoro = False
-        jugador_se_movio = False
-        tiempo_inicio = None
-        energia = 100
-        continue
+# Fuentes
+fuente_pequena = pygame.font.SysFont("Arial", 18)
+fuente_mediana = pygame.font.SysFont("Arial", 24)
+fuente_grande = pygame.font.SysFont("Arial", 36)
+fuente_titulo = pygame.font.SysFont("Arial", 72, bold=True)
 
-    if vidas <= 0:
-        texto_gameover = fuente.render("GAME OVER", True, ROJO)
-        pantalla.blit(texto_gameover, (ANCHO // 2 - 100, ALTO // 2))
-        pygame.display.update()
-        pygame.time.delay(3000)
-        ejecutando = False
+# Música
+try:
+    mixer.music.load("imgs/musica_fondo.mp3")
+    mixer.music.set_volume(0.5)
+    mixer.music.play(-1)  # Repetir indefinidamente
+except:
+    pass
 
+def spawn_enemigos(cantidad, nivel_actual):
+    global enemigos_restantes
+    tipos = ["normal"] * 70 + ["rapido"] * 20 + ["resistente"] * 10
+    if nivel_actual >= 3:
+        tipos += ["jefe"] * 5
+    
+    for _ in range(cantidad):
+        tipo = random.choice(tipos)
+        if tipo == "jefe" and nivel_actual < 3:
+            tipo = "resistente"
+            
+        x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
+        y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
+        
+        # Asegurarse de que no aparezca demasiado cerca del jugador
+        while math.hypot(x - jugador.rect.centerx, y - jugador.rect.centery) < 200:
+            x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
+            y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
+            
+        enemigos.append(Enemigo(x, y, tipo))
+        enemigos_restantes += 1
+
+def spawn_objeto_especial(tipo=None):
+    if not tipo:
+        tipos = ["tesoro"] * 70 + ["powerup"] * 20 + ["vida"] * 10
+        tipo = random.choice(tipos)
+        
+    objetos_especiales.append(ObjetoEspecial(tipo))
+
+def mostrar_hud():
+    # Barra de vida
+    vida_porcentaje = jugador.vidas / jugador.vidas_max
+    pygame.draw.rect(pantalla, ROJO, (10, 10, 200, 20))
+    pygame.draw.rect(pantalla, VERDE, (10, 10, 200 * vida_porcentaje, 20))
+    texto_vida = fuente_pequena.render(f"Vida: {jugador.vidas}/{jugador.vidas_max}", True, BLANCO)
+    pantalla.blit(texto_vida, (15, 10))
+    
+    # Barra de energía
+    energia_porcentaje = jugador.energia / jugador.energia_max
+    pygame.draw.rect(pantalla, MORADO, (10, 35, 200, 15))
+    pygame.draw.rect(pantalla, AZUL, (10, 35, 200 * energia_porcentaje, 15))
+    texto_energia = fuente_pequena.render(f"Energía: {int(jugador.energia)}/{jugador.energia_max}", True, BLANCO)
+    pantalla.blit(texto_energia, (15, 35))
+    
+    # Puntos y nivel
+    texto_puntos = fuente_mediana.render(f"Puntos: {jugador.puntos}", True, BLANCO)
+    texto_nivel = fuente_mediana.render(f"Nivel: {nivel}", True, BLANCO)
+    texto_objetivo = fuente_mediana.render(f"Objetivo: {puntos_objetivo}", True, BLANCO)
+    pantalla.blit(texto_puntos, (ANCHO - 150, 10))
+    pantalla.blit(texto_nivel, (ANCHO - 150, 40))
+    pantalla.blit(texto_objetivo, (ANCHO - 150, 70))
+    
+    # Poderes activos
+    y_poder = 70
+    for poder, activo in jugador.poderes.items():
+        if activo:
+            texto = fuente_pequena.render(poder.replace("_", " ").title(), True, AMARILLO)
+            pantalla.blit(texto, (15, y_poder))
+            y_poder += 20
+    
+    if jugador.escudo_activo:
+        texto = fuente_pequena.render("Escudo activo", True, CIAN)
+        pantalla.blit(texto, (15, y_poder))
+
+def mostrar_mensaje(texto, color=BLANCO, tamaño=36, duracion=2, y_offset=0):
+    fuente_temp = pygame.font.SysFont("Arial", tamaño)
+    superficie = fuente_temp.render(texto, True, color)
+    rect = superficie.get_rect(center=(ANCHO//2, ALTO//2 + y_offset))
+    pantalla.blit(superficie, rect)
     pygame.display.update()
+    pygame.time.delay(int(duracion * 1000))
 
+def pantalla_inicio():
+    pantalla.fill(NEGRO)
+    if fondo:
+        pantalla.blit(fondo, (0, 0))
+    
+    titulo = fuente_titulo.render("GALACTIC TREASURE HUNTER", True, DORADO)
+    subtitulo = fuente_grande.render("Presiona cualquier tecla para comenzar", True, BLANCO)
+    controles = fuente_mediana.render("Controles: Flechas para mover, F para disparar, R para mega láser", True, BLANCO)
+    objetivo = fuente_mediana.render("Objetivo: Recolecta tesoros y derrota enemigos", True, BLANCO)
+    
+    pantalla.blit(titulo, (ANCHO//2 - titulo.get_width()//2, ALTO//4))
+    pantalla.blit(subtitulo, (ANCHO//2 - subtitulo.get_width()//2, ALTO//2))
+    pantalla.blit(controles, (ANCHO//2 - controles.get_width()//2, ALTO//2 + 50))
+    pantalla.blit(objetivo, (ANCHO//2 - objetivo.get_width()//2, ALTO//2 + 90))
+    
+    pygame.display.update()
+    
+    esperando = True
+    while esperando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            if evento.type == pygame.KEYDOWN or evento.type == pygame.MOUSEBUTTONDOWN:
+                esperando = False
+    return True
+
+def pantalla_pausa():
+    pantalla.fill((0, 0, 0, 128))  # Semi-transparente
+    texto = fuente_grande.render("PAUSA", True, BLANCO)
+    continuar = fuente_mediana.render("Presiona P para continuar", True, BLANCO)
+    
+    pantalla.blit(texto, (ANCHO//2 - texto.get_width()//2, ALTO//2 - 50))
+    pantalla.blit(continuar, (ANCHO//2 - continuar.get_width()//2, ALTO//2 + 20))
+    
+    pygame.display.update()
+    
+    esperando = True
+    while esperando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_p:
+                esperando = False
+    return True
+
+def pantalla_final(victoria=False):
+    pantalla.fill(NEGRO)
+    if fondo:
+        pantalla.blit(fondo, (0, 0))
+    
+    if victoria:
+        titulo = fuente_titulo.render("¡VICTORIA!", True, DORADO)
+        mensaje = fuente_grande.render(f"Completaste todos los niveles con {jugador.puntos} puntos", True, BLANCO)
+    else:
+        titulo = fuente_titulo.render("GAME OVER", True, ROJO)
+        mensaje = fuente_grande.render(f"Alcanzaste el nivel {nivel} con {jugador.puntos} puntos", True, BLANCO)
+    
+    reiniciar = fuente_mediana.render("Presiona R para reiniciar o ESC para salir", True, BLANCO)
+    
+    pantalla.blit(titulo, (ANCHO//2 - titulo.get_width()//2, ALTO//3))
+    pantalla.blit(mensaje, (ANCHO//2 - mensaje.get_width()//2, ALTO//2))
+    pantalla.blit(reiniciar, (ANCHO//2 - reiniciar.get_width()//2, ALTO//2 + 100))
+    
+    pygame.display.update()
+    
+    esperando = True
+    while esperando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_r:
+                    return True  # Reiniciar
+                elif evento.key == pygame.K_ESCAPE:
+                    return False  # Salir
+    return False
+
+def reiniciar_juego():
+    global jugador, enemigos, objetos_especiales, lasers_jugador, lasers_enemigos
+    global meteoritos, efectos_particulas, explosiones, nivel, puntos_objetivo
+    global tiempo_inicio_nivel, enemigos_restantes, spawn_timer, jefe_aparecido, jefe_derrotado
+    global tiempo_ultimo_tesoro, pausado, game_over, victoria
+    
+    jugador = Jugador()
+    enemigos = []
+    objetos_especiales = []
+    lasers_jugador = []
+    lasers_enemigos = []
+    meteoritos = []
+    efectos_particulas = []
+    explosiones = []
+    
+    nivel = 1
+    puntos_objetivo = 5
+    tiempo_inicio_nivel = None
+    enemigos_restantes = 0
+    spawn_timer = 0
+    jefe_aparecido = False
+    jefe_derrotado = False
+    tiempo_ultimo_tesoro = 0
+    pausado = False
+    game_over = False
+    victoria = False
+
+# Bucle principal del juego
+if pantalla_inicio():
+    ejecutando = True
+    reloj = pygame.time.Clock()
+    
+    while ejecutando:
+        reloj.tick(60)  # 60 FPS
+        
+        # Manejo de eventos
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                ejecutando = False
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_p and not game_over and not victoria:
+                    if not pantalla_pausa():
+                        ejecutando = False
+                elif evento.key == pygame.K_f and jugador.energia >= 10 and jugador.disparo_cooldown <= 0:
+                    # Disparo normal
+                    laser = {
+                        "rect": pygame.Rect(jugador.rect.centerx-2, jugador.rect.top-10, 4, 10),
+                        "direccion": (0, -1),
+                        "velocidad": 10,
+                        "color": AZUL,
+                        "daño": 1
+                    }
+                    lasers_jugador.append(laser)
+                    jugador.energia -= 10
+                    jugador.disparo_cooldown = 5 if jugador.poderes["disparo_rapido"] else 10
+                    if sonido_laser:
+                        sonido_laser.play()
+                elif evento.key == pygame.K_r and jugador.poderes["mega_laser"] and jugador.energia >= 30:
+                    # Mega láser
+                    for angulo in range(-30, 31, 15):
+                        rad = math.radians(angulo)
+                        laser = {
+                            "rect": pygame.Rect(jugador.rect.centerx-3, jugador.rect.top-20, 6, 20),
+                            "direccion": (math.sin(rad), math.cos(rad + math.pi)),
+                            "velocidad": 8,
+                            "color": CIAN,
+                            "daño": 2
+                        }
+                        lasers_jugador.append(laser)
+                    jugador.energia -= 30
+                    if sonido_laser:
+                        sonido_laser.play()
+        
+        if pausado or game_over or victoria:
+            continue
+        
+        # Movimiento del jugador
+        teclas = pygame.key.get_pressed()
+        dx = dy = 0
+        if teclas[pygame.K_LEFT]:
+            dx = -1
+        if teclas[pygame.K_RIGHT]:
+            dx = 1
+        if teclas[pygame.K_UP]:
+            dy = -1
+        if teclas[pygame.K_DOWN]:
+            dy = 1
+        
+        jugador.mover(dx, dy)
+        jugador.actualizar()
+        
+        # Iniciar nivel si no se ha hecho
+        if tiempo_inicio_nivel is None:
+            tiempo_inicio_nivel = time.time()
+            spawn_enemigos(5 + nivel * 2, nivel)
+        
+        # Spawn de enemigos periódico
+        spawn_timer += 1/60
+        if spawn_timer >= 10 and enemigos_restantes > 0:  # Cada 10 segundos
+            spawn_timer = 0
+            spawn_enemigos(min(3, enemigos_restantes), nivel)
+        
+        # Spawn de tesoros y power-ups
+        if time.time() - tiempo_ultimo_tesoro > 5:  # Cada 5 segundos
+            tiempo_ultimo_tesoro = time.time()
+            if random.random() < 0.7:  # 70% de probabilidad
+                spawn_objeto_especial()
+        
+        # Actualizar enemigos
+        for enemigo in enemigos[:]:
+            enemigo.mover_hacia(jugador.rect)
+            
+            # Disparar
+            nuevos_lasers = enemigo.disparar(jugador.rect)
+            lasers_enemigos.extend(nuevos_lasers)
+            
+            # Colisión con láseres del jugador
+            for laser in lasers_jugador[:]:
+                if laser["rect"].colliderect(enemigo.rect):
+                    enemigo.vida -= laser["daño"]
+                    lasers_jugador.remove(laser)
+                    efectos_particulas.append(EfectoParticula(
+                        laser["rect"].centerx, laser["rect"].centery, 
+                        laser["color"], 10, 2
+                    ))
+                    if enemigo.vida <= 0:
+                        enemigos.remove(enemigo)
+                        enemigos_restantes -= 1
+                        jugador.puntos += 1 if enemigo.tipo != "jefe" else 5
+                        explosiones.append(EfectoParticula(
+                            enemigo.rect.centerx, enemigo.rect.centery,
+                            enemigo.color, 30, 4
+                        ))
+                        if sonido_explosion:
+                            sonido_explosion.play()
+                        if enemigo.tipo == "jefe":
+                            jefe_derrotado = True
+                            spawn_objeto_especial("powerup")
+                            spawn_objeto_especial("powerup")
+                            spawn_objeto_especial("vida")
+                        break
+        
+        # Actualizar láseres del jugador
+        for laser in lasers_jugador[:]:
+            laser["rect"].x += int(laser["direccion"][0] * laser["velocidad"])
+            laser["rect"].y += int(laser["direccion"][1] * laser["velocidad"])
+            
+            # Eliminar si sale de pantalla
+            if (laser["rect"].x < -50 or laser["rect"].x > ANCHO+50 or 
+                laser["rect"].y < -50 or laser["rect"].y > ALTO+50):
+                lasers_jugador.remove(laser)
+        
+        # Actualizar láseres enemigos
+        for laser in lasers_enemigos[:]:
+            laser["rect"].x += int(laser["direccion"][0] * laser["velocidad"])
+            laser["rect"].y += int(laser["direccion"][1] * laser["velocidad"])
+            
+            # Colisión con jugador
+            if laser["rect"].colliderect(jugador.rect):
+                if jugador.recibir_dano(5 if laser["color"] == ROJO else 2):
+                    lasers_enemigos.remove(laser)
+                    efectos_particulas.append(EfectoParticula(
+                        laser["rect"].centerx, laser["rect"].centery, 
+                        laser["color"], 10, 2
+                    ))
+            
+            # Eliminar si sale de pantalla
+            if (laser["rect"].x < -50 or laser["rect"].x > ANCHO+50 or 
+                laser["rect"].y < -50 or laser["rect"].y > ALTO+50):
+                lasers_enemigos.remove(laser)
+        
+        # Actualizar objetos especiales
+        for obj in objetos_especiales[:]:
+            # Colisión con jugador
+            if obj.rect.colliderect(jugador.rect):
+                if obj.tipo == "tesoro":
+                    jugador.puntos += obj.valor
+                    if sonido_tesoro:
+                        sonido_tesoro.play()
+                elif obj.tipo == "powerup":
+                    jugador.poderes[obj.tipo_powerup] = True
+                    if obj.tipo_powerup == "escudo":
+                        jugador.escudo_activo = True
+                        jugador.escudo_duracion = time.time()
+                    if sonido_powerup:
+                        sonido_powerup.play()
+                elif obj.tipo == "vida":
+                    jugador.vidas = min(jugador.vidas_max, jugador.vidas + obj.valor)
+                    if sonido_powerup:
+                        sonido_powerup.play()
+                
+                objetos_especiales.remove(obj)
+                efectos_particulas.append(EfectoParticula(
+                    obj.rect.centerx, obj.rect.centery, 
+                    obj.color, 20, 3
+                ))
+            elif not obj.esta_vivo():
+                objetos_especiales.remove(obj)
+        
+        # Actualizar efectos de partículas
+        for efecto in efectos_particulas[:]:
+            efecto.actualizar()
+            if not efecto.particulas:
+                efectos_particulas.remove(efecto)
+        
+        # Verificar si aparecer jefe (a mitad del nivel)
+        if not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
+            jefe_aparecido = True
+            enemigos.append(Enemigo(ANCHO//2, -100, "jefe"))
+            enemigos_restantes += 1
+            mostrar_mensaje("¡JEFE INCOMING!", ROJO, 48, 2)
+        
+        # Verificar fin de nivel
+        if jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido or jefe_derrotado:
+            if nivel < 5:  # Máximo 5 niveles
+                nivel += 1
+                puntos_objetivo += 5
+                tiempo_inicio_nivel = None
+                jefe_aparecido = False
+                jefe_derrotado = False
+                spawn_timer = 0
+                
+                # Mejorar jugador entre niveles
+                jugador.vidas = jugador.vidas_max
+                jugador.energia = jugador.energia_max
+                if nivel % 2 == 0:
+                    jugador.velocidad += 0.5
+                    jugador.energia_max += 10
+                
+                mostrar_mensaje(f"Nivel {nivel} completado!", VERDE, 48, 2)
+                mostrar_mensaje(f"Siguiente nivel: {nivel}", AMARILLO, 36, 1, 50)
+            else:
+                victoria = True
+        
+        # Verificar game over
+        if jugador.vidas <= 0:
+            game_over = True
+        
+        # Dibujado
+        if fondo:
+            pantalla.blit(fondo, (0, 0))
+        else:
+            pantalla.fill(NEGRO)
+        
+        # Dibujar objetos especiales
+        for obj in objetos_especiales:
+            obj.dibujar(pantalla)
+        
+        # Dibujar láseres
+        for laser in lasers_jugador:
+            pygame.draw.rect(pantalla, laser["color"], laser["rect"])
+        for laser in lasers_enemigos:
+            pygame.draw.rect(pantalla, laser["color"], laser["rect"])
+        
+        # Dibujar enemigos
+        for enemigo in enemigos:
+            enemigo.dibujar(pantalla)
+        
+        # Dibujar efectos
+        for efecto in efectos_particulas:
+            efecto.dibujar(pantalla)
+        
+        # Dibujar jugador
+        jugador.dibujar(pantalla)
+        
+        # Dibujar HUD
+        mostrar_hud()
+        
+        # Mensajes de nivel
+        if tiempo_inicio_nivel and time.time() - tiempo_inicio_nivel < 3:
+            texto = fuente_grande.render(f"Nivel {nivel}", True, BLANCO)
+            pantalla.blit(texto, (ANCHO//2 - texto.get_width()//2, ALTO//4))
+        
+        pygame.display.flip()
+        
+        # Pantallas de estado
+        if game_over:
+            if pantalla_final(False):
+                reiniciar_juego()
+            else:
+                ejecutando = False
+        elif victoria:
+            if pantalla_final(True):
+                reiniciar_juego()
+            else:
+                ejecutando = False
+                
 pygame.quit()
