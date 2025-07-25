@@ -322,7 +322,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 50 + (nivel * 2)  # Más puntos por nivel
+puntos_objetivo = 50 + (nivel * 10)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
