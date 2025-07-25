@@ -322,7 +322,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 50 + (nivel * 10)  # Más puntos por nivel
+puntos_objetivo = 100 + (nivel * 50)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
@@ -349,10 +349,16 @@ except:
 
 def spawn_enemigos(cantidad, nivel_actual):
     global enemigos_restantes
-    tipos = ["normal"] * 70 + ["rapido"] * 20 + ["resistente"] * 10
+    
+    # Aumenta la probabilidad de enemigos resistentes en niveles altos
+    if nivel_actual >= 3:
+        tipos = ["normal"] * 50 + ["resistente"] * 30 + ["jefe"] * 20
+    else:
+        tipos = ["normal"] * 70 + ["resistente"] * 30
+  
     if nivel_actual >= 3:
         tipos += ["jefe"] * 5
-
+        
     for _ in range(cantidad):
         tipo = random.choice(tipos)
         if tipo == "jefe" and nivel_actual < 3:
@@ -547,8 +553,8 @@ if pantalla_inicio():
                         ejecutando = False
                 elif evento.key == pygame.K_f and jugador.energia >= 10:
                     # Disparar 3 láseres en un pequeño abanico
-                    for i in range(-1, 4):  # Esto creará la cantidad de disparos 
-                        angulo = math.radians(i * 35)  # Pequeña desviación de 20 grados para cada láser
+                    for i in range(-1, 3):  # Esto creará la cantidad de disparos 
+                        angulo = math.radians(i * 30)  # Pequeña desviación para cada láser
                         dx = math.cos(angulo) * jugador.ultima_direccion[0] - math.sin(angulo) * jugador.ultima_direccion[1]
                         dy = math.sin(angulo) * jugador.ultima_direccion[0] + math.cos(angulo) * jugador.ultima_direccion[1]
                         
