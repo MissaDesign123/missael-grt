@@ -44,7 +44,7 @@ try:
     nave_img = pygame.image.load("imgs/nave.png")
     nave_img = pygame.transform.scale(nave_img, (60, 60))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
-    enemigo_img = pygame.transform.scale(enemigo_img, (40, 40))
+    enemigo_img = pygame.transform.scale(enemigo_img, (50, 50))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
     tesoro_img = pygame.image.load("imgs/tesoro.png")
@@ -523,7 +523,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 50
+    puntos_objetivo = 100 + (nivel * 50)  # Más puntos por nivel
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
