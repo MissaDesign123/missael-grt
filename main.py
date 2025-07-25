@@ -10,8 +10,8 @@ pygame.init()
 mixer.init()
 
 # Configuración de pantalla
-ANCHO, ALTO = 1024, 700  # Pantalla más grande
-pantalla = pygame.display.set_mode((ANCHO, ALTO))
+ANCHO, ALTO = 1280, 648  # Pantalla más grande
+pantalla = pygame.display.set_mode((ANCHO, ALTO), pygame.RESIZABLE)  # Permitir redimensionamiento
 pygame.display.set_caption("peleas galácticas entre monstrruos")  # Título de la ventana
 FPS = 60 #FPS
 
