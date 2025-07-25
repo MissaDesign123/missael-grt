@@ -143,11 +143,35 @@ class Jugador:
             
         # Regeneración de energía
         if self.energia < self.energia_max:
-            self.energia += 0.25
+            self.energia += 0.2
             
         # Escudo temporal
         if self.escudo_activo and time.time() - self.escudo_duracion > 5:
             self.escudo_activo = False
+            
+    def disparar_superlaser(self):
+        if self.energia >= 30:  # Coste alto de energía
+            self.energia -= 30
+            lasers = []
+            # Disparar un láser más grande y poderoso
+            for i in range(-1, 9):  # cantidad de laseres en un pequeño abanico
+                angulo = math.radians(i * 20)  # Menor dispersión que el disparo normal
+                dx = math.cos(angulo) * self.ultima_direccion[0] - math.sin(angulo) * self.ultima_direccion[1]
+                dy = math.sin(angulo) * self.ultima_direccion[0] + math.cos(angulo) * self.ultima_direccion[1]
+                
+                laser = {
+                    "rect": pygame.Rect(self.rect.centerx-4, self.rect.centery-4, 8, 15),  # Más grande
+                    "direccion": (dx, dy),
+                    "velocidad": 12,  # Más rápido
+                    "color": CIAN,  # Color diferente
+                    "daño": 3  # Más daño
+                }
+                lasers.append(laser)
+            
+            if sonido_laser:
+                sonido_laser.play()  # O usa un sonido diferente para el superláser
+            return lasers
+        return []
 
 class Enemigo:
     def __init__(self, x, y, tipo="normal", nivel=1):
@@ -551,6 +575,11 @@ if pantalla_inicio():
                 if evento.key == pygame.K_p and not game_over and not victoria:
                     if not pantalla_pausa():
                         ejecutando = False
+                        
+                elif evento.key == pygame.K_r:  # Tecla R para superláser
+                    nuevos_lasers = jugador.disparar_superlaser()
+                    lasers_jugador.extend(nuevos_lasers)
+                    
                 elif evento.key == pygame.K_f and jugador.energia >= 10:
                     # Disparar 3 láseres en un pequeño abanico
                     for i in range(-1, 3):  # Esto creará la cantidad de disparos 
@@ -568,8 +597,8 @@ if pantalla_inicio():
                         
                         lasers_jugador.append(laser)
                     
-                    jugador.energia -= 5  # Coste de energía por el conjunto de disparos
-                    #jugador.disparo_cooldown = 3
+                    jugador.energia -= 2  # Coste de energía por el conjunto de disparos
+                    jugador.disparo_cooldown = 0
                     if sonido_laser:
                         sonido_laser.play()
         if pausado or game_over or victoria:
