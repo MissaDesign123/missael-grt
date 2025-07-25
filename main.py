@@ -85,7 +85,6 @@ class Jugador:
         self.rect = pygame.Rect(ANCHO//2, ALTO//2, 40, 40)
         self.velocidad = 5
         self.puntos = 0
-        #self.vidas = 100
         self.vidas = 30         
         self.vidas_max = 30
         self.energia = 100     
