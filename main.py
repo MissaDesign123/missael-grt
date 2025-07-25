@@ -62,11 +62,11 @@ except:
 
 # Cargar sonidos
 try:
-    sonido_laser = mixer.Sound("imgs/laser.wav")
-    sonido_explosion = mixer.Sound("imgs/explosion.wav")
-    sonido_tesoro = mixer.Sound("imgs/tesoro.wav")
-    sonido_powerup = mixer.Sound("imgs/powerup.wav")
-    sonido_dano = mixer.Sound("imgs/dano.wav")
+    sonido_laser = mixer.Sound("sounds/laser.wav")
+    sonido_explosion = mixer.Sound("sounds/explosion.wav")
+    sonido_tesoro = mixer.Sound("sounds/tesoro.wav")
+    sonido_powerup = mixer.Sound("sounds/powerup.wav")
+    sonido_dano = mixer.Sound("sounds/dano.wav")
 except:
     # Si no hay sonidos, los desactivamos
     sonido_laser = None
