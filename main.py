@@ -46,7 +46,7 @@ try:
     enemigo_img = pygame.transform.scale(enemigo_img, (40, 40))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
-    tesoro_img = pygame.image.load("imgs/tesoro.png")
+    tesoro_img = pygame.image.load("imgs/tesoro.jpg")
     tesoro_img = pygame.transform.scale(tesoro_img, (30, 30))
     powerup_img = pygame.image.load("imgs/powerup.png")
     powerup_img = pygame.transform.scale(powerup_img, (25, 25))
