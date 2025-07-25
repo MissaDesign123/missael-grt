@@ -716,7 +716,7 @@ if pantalla_inicio():
         if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
-                puntos_objetivo += 15
+                puntos_objetivo += 40 #Se cambia que tanto aumenta los puntos objetivos en cada niel
                 # Limpiar todo
                 enemigos.clear()
                 lasers_enemigos.clear()
