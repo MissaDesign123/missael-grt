@@ -641,7 +641,7 @@ if pantalla_inicio():
             spawn_timer = 0
             
         # Spawnear siempre un mínimo de enemigos, independientemente de enemigos_restantes
-            spawn_cantidad = min(3 + nivel, 8)  # Entre 3 y 8 enemigos según nivel
+            spawn_cantidad = min(2 + nivel, 7)  # Rango de enemigos según nivel
             spawn_enemigos(spawn_cantidad, nivel)
             
             if enemigos_restantes > 0:
