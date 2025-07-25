@@ -173,7 +173,7 @@ class Enemigo:
         elif tipo == "jefe":
             self.rect = pygame.Rect(x, y, 80, 80)
             self.velocidad = 1
-            self.vida = 10
+            self.vida = 10 + nivel * 5 #Vida del jefe aumenta en cada nivel
             self.color = ROJO
             self.sprite = jefe_img
             self.patron_movimiento = 0
@@ -733,7 +733,7 @@ if pantalla_inicio():
                 tiempo_ultimo_tesoro = time.time()
                 
                 # Spawn inicial de enemigos
-                spawn_enemigos(5 + nivel * 2, nivel)
+                spawn_enemigos(10 + nivel * 3, nivel)
                 
                 #Mejorar jugador entre niveles
                 jugador.vidas = jugador.vidas_max
