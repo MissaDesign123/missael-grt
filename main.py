@@ -322,7 +322,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 100 + (nivel * 50)  # Más puntos por nivel
+puntos_objetivo = 100 + (nivel * 100)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
@@ -523,7 +523,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 100 + (nivel * 50)  # Más puntos por nivel
+    puntos_objetivo = 100 + (nivel * 100)  # Más puntos por nivel
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
@@ -722,7 +722,7 @@ if pantalla_inicio():
         if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
-                puntos_objetivo += 40 #Se cambia que tanto aumenta los puntos objetivos en cada niel
+                puntos_objetivo += 100 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
                 # Limpiar todo
                 enemigos.clear()
                 lasers_enemigos.clear()
