@@ -398,24 +398,31 @@ def spawn_enemigos(cantidad, nivel_actual):
     # Disminuir la cantidad de enemigos normales
     cantidad = max(3, 5 + nivel_actual - 2)  # Menos enemigos que antes
     
-    # Aumentar jefes según nivel (1 jefe por nivel)
-    jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
+     # Aumenta la probabilidad de enemigos resistentes en niveles altos
+    if nivel_actual >= 3:
+        tipos = ["normal"] * 30 + ["resistente"] * 15 + ["rapido"] * 5 + ["jefe"] * 25
+    else:
+        tipos = ["normal"] * 50 + ["resistente"] * 20  + ["rapido"] * 10
     
-    # Crear lista de tipos de enemigos
-    tipos = ["normal"] * (10 - nivel_actual * 2) + ["rapido"] * (7 - nivel_actual ) + ["resistente"] * (2 + nivel_actual)
-    
-    # Añadir jefes solo si estamos en la segunda mitad del nivel
-    if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
-        # Añadir jefes según el nivel
-        tipos += ["jefe"] * jefes_por_nivel
-       
-    for _ in range(cantidad):
-        tipo = random.choice(tipos) #Se elige el tipo de enemigo de manera aleatoria
+    if nivel_actual >= 2 and jugador.puntos >= puntos_objetivo * 0.7 and not any(e.tipo == "jefe" for e in enemigos):
+        # Añadir jefes según el nivel (máximo 3)
+        jefes_a_spawnear = min(nivel_actual - 1, 3)
+        for _ in range(jefes_a_spawnear):
+            x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
+            y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
+            # Asegurarse de que no aparezca demasiado cerca del jugador
+            while math.hypot(x - jugador.rect.centerx, y - jugador.rect.centery) < 200:
+                x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
+                y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
+            enemigos.append(Enemigo(x, y, "jefe", nivel_actual))
+            enemigos_restantes += 1
         
-        if tipo == "jefe" and (jefe_aparecido and not jefe_derrotado):
-            # Si ya hay un jefe activo y no ha sido derrotado, no spawnear otro
-            tipo = random.choice(["normal", "resistente", "rapido"])
-            
+        mostrar_mensaje(f"¡VIENEN {jefes_a_spawnear} JEFES!", ROJO, 48, 2)
+        return  # Salir de la función después de spawnear jefes
+    
+    # Spawn normal de otros enemigos
+    for _ in range(cantidad):
+        tipo = random.choice(tipos)
         x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
         y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
         
@@ -428,7 +435,7 @@ def spawn_enemigos(cantidad, nivel_actual):
           
     # Actualizar enemigos_restantes SOLO al inicio del nivel
     if tiempo_inicio_nivel is None:
-        enemigos_restantes = cantidad + jefes_por_nivel  # Incluir jefes en el conteo
+        enemigos_restantes = cantidad
         
 def spawn_objeto_especial(tipo=None):
     if not tipo:
@@ -779,14 +786,14 @@ if pantalla_inicio():
                 efectos_particulas.remove(efecto)
 
         # Modificar la condición de aparición del jefe:
-        if nivel >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
+        if nivel >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.7:  # 70% del objetivo
             jefe_aparecido = True
-            # Spawnear tantos jefes como el nivel actual
-            for _ in range(nivel):  # Nivel 2: 2 jefes, nivel 3: 3 jefes, etc.
+            # Spawnear 1 jefe en nivel 2, 2 en nivel 3, etc.
+            for _ in range(min(nivel-1, 3)):  # Máximo 3 jefes
                 enemigos.append(Enemigo(random.randint(0, ANCHO), -100, "jefe", nivel))
                 enemigos_restantes += 1
-            mostrar_mensaje(f"¡VIENEN {nivel} JEFES!", ROJO, 48, 2)
-                        
+            mostrar_mensaje(f"¡VIENEN {min(nivel-1, 3)} JEFES!", ROJO, 48, 2)
+       
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
