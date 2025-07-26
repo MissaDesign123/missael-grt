@@ -143,6 +143,11 @@ class Jugador:
         if self.escudo_activo:
             pygame.draw.circle(pantalla, CIAN, self.rect.center, 30, 2)
             
+        if self.invulnerable:
+            # Parpadeo rojo al recibir daño
+            if int(time.time() * 10) % 2 == 0:
+                pygame.draw.rect(pantalla, (255, 0, 0, 100), self.rect)  # Superposición roja
+                    
     def recibir_dano(self, cantidad):
         if not self.invulnerable and not self.escudo_activo:
             self.vidas -= cantidad
@@ -222,7 +227,7 @@ class Enemigo:
         elif tipo == "jefe":
             self.rect = pygame.Rect(x, y, 90, 90)
             self.velocidad = 1
-            self.vida = 10 + nivel * 5 #Vida del jefe aumenta en cada nivel
+            self.vida = 15 + nivel * 3 #Vida del jefe aumenta en cada nivel
             self.color = ROJO
             self.sprite = jefe_img
             self.patron_movimiento = 0
@@ -477,6 +482,10 @@ def spawn_enemigos(cantidad, nivel_actual):
                             
             enemigos.append(jefe)
             enemigos_restantes += jefes_a_spawnear
+            
+            #Detener el tiempo para el jugador
+            jugador.velocidad = 0
+            pygame.time.set_timer(pygame.USEREVENT, 2000)  # Después de 2 seg, restaurar velocidad
         
         mostrar_mensaje(f"¡ALERTA! {jefes_a_spawnear} JEFES SE ACERCAN", ROJO, 48, 3)
         return
@@ -497,8 +506,7 @@ def spawn_enemigos(cantidad, nivel_actual):
         enemigos.append(Enemigo(x, y, tipo, nivel_actual))
     
     # Actualizar contador solo al inicio del nivel
-    if tiempo_inicio_nivel is None:
-        enemigos_restantes = cantidad
+    enemigos_restantes += cantidad
         
 def spawn_objeto_especial(tipo=None):
     if not tipo:
@@ -538,9 +546,12 @@ def mostrar_hud():
             pantalla.blit(texto, (15, y_poder))
             y_poder += 20
     
+    # Después de mostrar poderes activos
     if jugador.escudo_activo:
-        texto = fuente_pequena.render("Escudo activo", True, CIAN)
+        tiempo_restante = 5 - (time.time() - jugador.escudo_duracion)
+        texto = fuente_pequena.render(f"Escudo: {max(0, int(tiempo_restante))}s", True, CIAN)
         pantalla.blit(texto, (15, y_poder))
+
 
 def mostrar_mensaje(texto, color=BLANCO, tamaño=36, duracion=2, y_offset=0):
     fuente_temp = pygame.font.SysFont("Arial", tamaño)
@@ -579,7 +590,10 @@ def pantalla_inicio():
     return True
 
 def pantalla_pausa():
-    pantalla.fill((0, 0, 0, 128))  # Semi-transparente
+    fondo_transparente = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+    fondo_transparente.fill((0, 0, 0, 180))  # Color negro con alpha
+    pantalla.blit(fondo_transparente, (0, 0))
+
     texto = fuente_grande.render("PAUSA", True, BLANCO)
     continuar = fuente_mediana.render("Presiona P para continuar", True, BLANCO)
     
@@ -665,14 +679,22 @@ def reiniciar_juego():
 if pantalla_inicio():
     ejecutando = True
     reloj = pygame.time.Clock()
+    nivel_iniciado = False
     
     while ejecutando:
         reloj.tick(FPS) 
+        
+        # Limpiar efectos viejos
+        efectos_particulas = [ef for ef in efectos_particulas if ef.particulas]
         
         # Manejo de eventos
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 ejecutando = False
+                
+            elif evento.type == pygame.USEREVENT:
+                jugador.velocidad = 5
+                
             elif evento.type == pygame.KEYDOWN:
                 
                 if evento.key == pygame.K_p and not game_over and not victoria:
@@ -723,9 +745,10 @@ if pantalla_inicio():
         jugador.actualizar()
         
         # Iniciar nivel si no se ha hecho
-        if tiempo_inicio_nivel is None:
+        if not nivel_iniciado:
             tiempo_inicio_nivel = time.time()
             spawn_enemigos(5 + nivel * 2, nivel)
+            nivel_iniciado = True
         
         # Spawn de enemigos periódico
         spawn_timer += 1/FPS
@@ -740,11 +763,11 @@ if pantalla_inicio():
                 spawn_enemigos(min(1, enemigos_restantes), nivel)
         
         # Spawn de tesoros y power-ups
-        if time.time() - tiempo_ultimo_tesoro > 5:  # Cada 5 segundos
+        if time.time() - tiempo_ultimo_tesoro > random.uniform(3, 8):  # Entre 3 y 8 segundos
             tiempo_ultimo_tesoro = time.time()
-            if random.random() < 0.7:  # 70% de probabilidad
+            if random.random() < 0.7:
                 spawn_objeto_especial()
-        
+                
         # Actualizar enemigos
         for enemigo in enemigos[:]:
             enemigo.mover_hacia(jugador.rect)
@@ -798,6 +821,13 @@ if pantalla_inicio():
         
         # Actualizar láseres enemigos
         for laser in lasers_enemigos[:]:
+            # Colisión con meteoritos
+            for meteorito in meteoritos[:]:
+                if laser["rect"].colliderect(meteorito.rect):
+                    lasers_enemigos.remove(laser)
+                    meteoritos.remove(meteorito)
+                    break
+
             laser["rect"].x += int(laser["direccion"][0] * laser["velocidad"])
             laser["rect"].y += int(laser["direccion"][1] * laser["velocidad"])
             
@@ -824,7 +854,9 @@ if pantalla_inicio():
                     if sonido_tesoro:
                         sonido_tesoro.play()
                 elif obj.tipo == "powerup":
-                    jugador.poderes[obj.tipo_powerup] = True
+                    if sum(jugador.poderes.values()) < 2:  # máximo 2 poderes activos
+                        jugador.poderes[obj.tipo_powerup] = True
+
                     if obj.tipo_powerup == "escudo":
                         jugador.escudo_activo = True
                         jugador.escudo_duracion = time.time()
@@ -848,15 +880,22 @@ if pantalla_inicio():
             efecto.actualizar()
             if not efecto.particulas:
                 efectos_particulas.remove(efecto)
-                
-        #Llamado a jefes
-        spawn_enemigos(5 + nivel * 2, nivel)
         
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
                 puntos_objetivo += 50 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
+                # Esperar a que terminen efectos antes de limpiar
+                while any(ef.particulas for ef in efectos_particulas):
+                    # Dibujar efectos restantes
+                    pantalla.fill(NEGRO)
+                    for ef in efectos_particulas:
+                        ef.dibujar(pantalla)
+                    pygame.display.flip()     
+                
+                nivel_iniciado = False
+                
                 # Limpiar todo
                 enemigos.clear()
                 lasers_enemigos.clear()
@@ -909,7 +948,7 @@ if pantalla_inicio():
             pygame.draw.rect(pantalla, laser["color"], laser["rect"])
         for laser in lasers_enemigos:
             pygame.draw.rect(pantalla, laser["color"], laser["rect"])
-        
+
         # Dibujar enemigos
         for enemigo in enemigos:
             enemigo.dibujar(pantalla)
