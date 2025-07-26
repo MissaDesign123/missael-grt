@@ -367,7 +367,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 80 + (nivel * 100)  # Más puntos por nivel
+puntos_objetivo = 50 + (nivel * 50)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
@@ -402,7 +402,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
     
     # Crear lista de tipos de enemigos
-    tipos = ["normal"] * (25 - nivel_actual * 5) + ["rapido"] * (15 - nivel_actual * 3) + ["resistente"] * (5 + nivel_actual * 2)
+    tipos = ["normal"] * (10 - nivel_actual * 2) + ["rapido"] * (7 - nivel_actual ) + ["resistente"] * (2 + nivel_actual)
     
     # Añadir jefes solo si estamos en la segunda mitad del nivel
     if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
@@ -410,7 +410,8 @@ def spawn_enemigos(cantidad, nivel_actual):
         tipos += ["jefe"] * jefes_por_nivel
     
     for _ in range(cantidad):
-        tipo = random.choice(tipos)
+        tipo = random.choice(tipos) #Se elige el tipo de enemigo de manera aleatoria
+        
         if tipo == "jefe" and (jefe_aparecido and not jefe_derrotado):
             # Si ya hay un jefe activo y no ha sido derrotado, no spawnear otro
             tipo = random.choice(["normal", "resistente", "rapido"])
@@ -487,7 +488,7 @@ def pantalla_inicio():
     
     titulo = fuente_titulo.render("TREASURE HUNTER", True, DORADO)
     subtitulo = fuente_grande.render("Presiona cualquier tecla para comenzar", True, BLANCO)
-    controles = fuente_mediana.render("Controles: Flechas para mover, F para disparar, R para mega láser", True, BLANCO)
+    controles = fuente_mediana.render("Controles: Flechas para mover, F para disparar, R para mega , P para pausar", True, BLANCO)
     objetivo = fuente_mediana.render("Objetivo: Recolecta tesoros y derrota enemigos", True, BLANCO)
     
     pantalla.blit(titulo, (ANCHO//2 - titulo.get_width()//2, ALTO//4))
@@ -579,7 +580,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 80 + (nivel * 100)
+    puntos_objetivo = 50 + (nivel * 50)
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
@@ -662,11 +663,11 @@ if pantalla_inicio():
             spawn_timer = 0
             
         # Spawnear siempre un mínimo de enemigos, independientemente de enemigos_restantes
-            spawn_cantidad = min(2 + nivel, 6)  # Rango de enemigos según nivel
+            spawn_cantidad = min(nivel, 6)  # Rango de enemigos según nivel
             spawn_enemigos(spawn_cantidad, nivel)
             
             if enemigos_restantes > 0:
-                spawn_enemigos(min(5, enemigos_restantes), nivel)
+                spawn_enemigos(min(1, nivel), nivel)
         
         # Spawn de tesoros y power-ups
         if time.time() - tiempo_ultimo_tesoro > 5:  # Cada 5 segundos
@@ -785,7 +786,7 @@ if pantalla_inicio():
         if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
-                puntos_objetivo += 80 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
+                puntos_objetivo += 50 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
                 # Limpiar todo
                 enemigos.clear()
                 lasers_enemigos.clear()
