@@ -771,14 +771,14 @@ if pantalla_inicio():
                 efectos_particulas.remove(efecto)
 
         # Modificar la condición de aparición del jefe:
-        if not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
+        if nivel >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
             jefe_aparecido = True
             # Spawnear tantos jefes como el nivel actual
-            for _ in range(nivel):
+            for _ in range(nivel):  # Nivel 2: 2 jefes, nivel 3: 3 jefes, etc.
                 enemigos.append(Enemigo(random.randint(0, ANCHO), -100, "jefe", nivel))
                 enemigos_restantes += 1
             mostrar_mensaje(f"¡VIENEN {nivel} JEFES!", ROJO, 48, 2)
-                
+                        
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
