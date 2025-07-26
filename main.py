@@ -373,6 +373,45 @@ class EfectoParticula:
             superficie = pygame.Surface((p["tamaño"]*2, p["tamaño"]*2), pygame.SRCALPHA)
             pygame.draw.circle(superficie, color, (p["tamaño"], p["tamaño"]), p["tamaño"])
             pantalla.blit(superficie, (p["x"] - p["tamaño"], p["y"] - p["tamaño"]))
+            
+class EfectoAparicionJefe:
+    def __init__(self, x, y):
+        self.particulas = []
+        self.x = x
+        self.y = y
+        self.tiempo_inicio = time.time()
+        
+        # Crear partículas en un círculo grande
+        for _ in range(50):
+            angulo = random.uniform(0, math.pi*2)
+            radio = random.uniform(50, 150)
+            velocidad = random.uniform(1, 3)
+            self.particulas.append({
+                "x": x + math.cos(angulo) * radio,
+                "y": y + math.sin(angulo) * radio,
+                "dx": (x - (x + math.cos(angulo) * radio)) * velocidad * 0.05,
+                "dy": (y - (y + math.sin(angulo) * radio)) * velocidad * 0.05,
+                "color": (random.randint(200, 255), random.randint(0, 50), random.randint(0, 50)),
+                "tamaño": random.randint(3, 6),
+                "vida": random.uniform(1.5, 2.5)
+            })
+    
+    def actualizar(self):
+        for p in self.particulas[:]:
+            p["x"] += p["dx"]
+            p["y"] += p["dy"]
+            p["vida"] -= 1/60  # Reducir vida según FPS
+            
+            if p["vida"] <= 0:
+                self.particulas.remove(p)
+    
+    def dibujar(self, pantalla):
+        for p in self.particulas:
+            alpha = min(255, p["vida"] * 255)
+            color = (*p["color"], alpha)
+            superficie = pygame.Surface((p["tamaño"]*2, p["tamaño"]*2), pygame.SRCALPHA)
+            pygame.draw.circle(superficie, color, (p["tamaño"], p["tamaño"]), p["tamaño"])
+            pantalla.blit(superficie, (p["x"] - p["tamaño"], p["y"] - p["tamaño"]))
 
 # Inicialización de objetos del juego
 jugador = Jugador()
@@ -424,21 +463,28 @@ def spawn_enemigos(cantidad, nivel_actual):
         tipos = ["normal"] * 50 + ["resistente"] * 20  + ["rapido"] * 10
     
     if nivel_actual >= 2 and jugador.puntos >= puntos_objetivo * 0.7 and not any(e.tipo == "jefe" for e in enemigos):
-        # Añadir jefes según el nivel (máximo 3)
         jefes_a_spawnear = min(nivel_actual - 1, 3)
         for _ in range(jefes_a_spawnear):
-            x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
-            y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
-            # Asegurarse de que no aparezca demasiado cerca del jugador
-            while math.hypot(x - jugador.rect.centerx, y - jugador.rect.centery) < 200:
-                x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
-                y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
-            enemigos.append(Enemigo(x, y, "jefe", nivel_actual))
+            x = random.randint(100, ANCHO-100)
+            y = -100  # Aparecen desde arriba
+            
+            # Crear el jefe
+            jefe = Enemigo(x, y, "jefe", nivel_actual)
+            jefe.efecto_aparicion = EfectoAparicionJefe(x + jefe.rect.width//2, y + jefe.rect.height//2)
+            
+            # Sonido especial para jefe (si tienes uno)
+            try:
+                sonido_jefe = mixer.Sound("sounds/jefe_appear.mp3")
+                sonido_jefe.play()
+            except:
+                pass
+                
+            enemigos.append(jefe)
             enemigos_restantes += 1
         
-        mostrar_mensaje(f"¡VIENEN {jefes_a_spawnear} JEFES!", ROJO, 48, 2)
-        return  # Salir de la función después de spawnear jefes
-    
+        mostrar_mensaje(f"¡ALERTA! {jefes_a_spawnear} JEFES SE ACERCAN", ROJO, 48, 3)
+        return
+
     # Spawn normal de otros enemigos
     for _ in range(cantidad):
         tipo = random.choice(tipos)
