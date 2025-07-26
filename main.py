@@ -106,8 +106,8 @@ class Jugador:
         self.rect = pygame.Rect(ANCHO//2, ALTO//2, 40, 40)
         self.velocidad = 5
         self.puntos = 0
-        self.vidas = 30         
-        self.vidas_max = 30
+        self.vidas = 50         
+        self.vidas_max = 50
         self.energia = 100     
         self.energia_max = 100
         self.invulnerable = False
@@ -205,7 +205,7 @@ class Enemigo:
             self.sprite = enemigo_img
         elif tipo == "rapido":
             self.rect = pygame.Rect(x, y, 30, 30)
-            self.velocidad = 4 + nivel * 0.15
+            self.velocidad = 3 + nivel * 0.15
             self.vida = 3
             self.color = ROSA
             self.sprite = enemigo_2_img
@@ -402,7 +402,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
     
     # Crear lista de tipos de enemigos
-    tipos = ["normal"] * (70 - nivel_actual * 10) + ["resistente"] * (20 + nivel_actual * 2)
+    tipos = ["normal"] * (60 - nivel_actual * 10) + ["rapido"] * (40 - nivel_actual * 6) + ["resistente"] * (20 + nivel_actual * 2)
     
     # Añadir jefes solo si estamos en la segunda mitad del nivel
     if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
@@ -782,7 +782,7 @@ if pantalla_inicio():
             mostrar_mensaje(f"¡VIENEN {nivel} JEFES!", ROJO, 48, 2)
                         
         # Verificar fin de nivel
-        if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
+        if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
                 puntos_objetivo += 80 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
