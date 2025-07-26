@@ -530,21 +530,23 @@ def pantalla_pausa():
 def pantalla_final(victoria=False):
     pantalla.fill(NEGRO)
     
-    if fondos[nivel-1]:
-        pantalla.blit(fondos[nivel-1], (0, 0))
-    
     if victoria:
         titulo = fuente_titulo.render("¡VICTORIA!", True, DORADO)
         mensaje = fuente_grande.render(f"Completaste todos los niveles con {jugador.puntos} puntos", True, BLANCO)
     else:
         titulo = fuente_titulo.render("GAME OVER", True, ROJO)
         mensaje = fuente_grande.render(f"Alcanzaste el nivel {nivel} con {jugador.puntos} puntos", True, BLANCO)
+        nivel_perdido = fuente_mediana.render(f"Perdiste en el nivel {nivel}", True, BLANCO)
     
-    reiniciar = fuente_mediana.render("Presiona R para reiniciar o ESC para salir", True, BLANCO)
+    reiniciar = fuente_mediana.render("Presiona R para reiniciar desde el nivel 1", True, BLANCO)
+    salir = fuente_mediana.render("Presiona ESC para salir", True, BLANCO)
     
     pantalla.blit(titulo, (ANCHO//2 - titulo.get_width()//2, ALTO//3))
     pantalla.blit(mensaje, (ANCHO//2 - mensaje.get_width()//2, ALTO//2))
+    if not victoria:
+        pantalla.blit(nivel_perdido, (ANCHO//2 - nivel_perdido.get_width()//2, ALTO//2 + 40))
     pantalla.blit(reiniciar, (ANCHO//2 - reiniciar.get_width()//2, ALTO//2 + 100))
+    pantalla.blit(salir, (ANCHO//2 - salir.get_width()//2, ALTO//2 + 140))
     
     pygame.display.update()
     
