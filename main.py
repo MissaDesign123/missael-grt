@@ -44,17 +44,25 @@ ROSA = (255, 105, 180)
 
 # Cargar imágenes (asumiendo que existen estos archivos en imgs/)
 try:
-    fondo = pygame.image.load("imgs/fondo.jpg")
-    fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
+    fondos = []  # Lista para almacenar los fondos de cada nivel
+    for i in range(1, 6):  
+        fondo_img = pygame.image.load(f"imgs/fondo_{i}.png")
+        fondos.append(pygame.transform.scale(fondo_img, (ANCHO, ALTO)))
+    
+    # Si no hay suficientes fondos, usamos el primero para todos los niveles
+    if len(fondos) < 5:
+        for i in range(len(fondos), 5):
+            fondos.append(fondos[0].copy())
+    
     meteoro_img = pygame.image.load("imgs/obstaculo.png")
     meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))
     nave_img = pygame.image.load("imgs/nave.png")
     nave_img = pygame.transform.scale(nave_img, (60, 60))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
     enemigo_img = pygame.transform.scale(enemigo_img, (60, 60))
-    enemigo_2_img = pygame.image.load("imgs/enemigo_2.png")
+    enemigo_2_img = pygame.image.load("imgs/enemigo_2.png")  # Corregir si hay typo en el nombre del archivo
     enemigo_2_img = pygame.transform.scale(enemigo_2_img, (60, 60))
-    enemigo_3_img = pygame.image.load("imgs/enemigo_3.png")
+    enemigo_3_img = pygame.image.load("imgs/enemigo_3.png")  # Asegurarse que el archivo existe con este nombre
     enemigo_3_img = pygame.transform.scale(enemigo_3_img, (60, 60))
     jefe_img = pygame.image.load("imgs/jefe.png")
     jefe_img = pygame.transform.scale(jefe_img, (80, 80))
@@ -66,10 +74,12 @@ try:
     vida_img = pygame.transform.scale(vida_img, (65, 65)) 
 except:
     # Si no hay imágenes, usaremos formas geométricas
-    fondo = None
+    fondos = [None] * 5
     meteoro_img = None
     nave_img = None
     enemigo_img = None
+    enemigo_2_img = None  # Añadir esta línea
+    enemigo_3_img = None  # Añadir esta línea
     jefe_img = None
     tesoro_img = None
     powerup_img = None
@@ -385,19 +395,25 @@ except:
 def spawn_enemigos(cantidad, nivel_actual):
     global enemigos_restantes
     
-    # Aumenta la probabilidad de enemigos resistentes en niveles altos
-    if nivel_actual >= 3:
-        tipos = ["normal"] * 30 + ["resistente"] * 15 + ["jefe"] * 25
-    else:
-        tipos = ["normal"] * 50 + ["resistente"] * 20
-  #Cantidad de jefes que aparece
-    if nivel_actual >= 3:
-        tipos += ["jefe"] * 3
-        
+    # Disminuir la cantidad de enemigos normales
+    cantidad = max(3, 5 + nivel_actual - 2)  # Menos enemigos que antes
+    
+    # Aumentar jefes según nivel (1 jefe por nivel)
+    jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
+    
+    # Crear lista de tipos de enemigos
+    tipos = ["normal"] * (70 - nivel_actual * 10) + ["resistente"] * (20 + nivel_actual * 2)
+    
+    # Añadir jefes solo si estamos en la segunda mitad del nivel
+    if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
+        # Añadir jefes según el nivel
+        tipos += ["jefe"] * jefes_por_nivel
+    
     for _ in range(cantidad):
         tipo = random.choice(tipos)
-        if tipo == "jefe" and nivel_actual < 3:
-            tipo = "resistente"
+        if tipo == "jefe" and (jefe_aparecido and not jefe_derrotado):
+            # Si ya hay un jefe activo y no ha sido derrotado, no spawnear otro
+            tipo = random.choice(["normal", "resistente"])
             
         x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
         y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
@@ -407,11 +423,12 @@ def spawn_enemigos(cantidad, nivel_actual):
             x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
             y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
             
-        enemigos.append(Enemigo(x, y, tipo))
+        enemigos.append(Enemigo(x, y, tipo, nivel_actual))
           
     # Actualizar enemigos_restantes SOLO al inicio del nivel
     if tiempo_inicio_nivel is None:
-        enemigos_restantes = cantidad
+        enemigos_restantes = cantidad + jefes_por_nivel  # Incluir jefes en el conteo
+        
 def spawn_objeto_especial(tipo=None):
     if not tipo:
         tipos = ["tesoro"] * 70 + ["powerup"] * 20 + ["vida"] * 10
@@ -464,8 +481,9 @@ def mostrar_mensaje(texto, color=BLANCO, tamaño=36, duracion=2, y_offset=0):
 
 def pantalla_inicio():
     pantalla.fill(NEGRO)
-    if fondo:
-        pantalla.blit(fondo, (0, 0))
+    
+    if fondos[nivel-1]:
+        pantalla.blit(fondos[nivel-1], (0, 0))
     
     titulo = fuente_titulo.render("GALACTIC TREASURE HUNTER", True, DORADO)
     subtitulo = fuente_grande.render("Presiona cualquier tecla para comenzar", True, BLANCO)
@@ -511,8 +529,9 @@ def pantalla_pausa():
 
 def pantalla_final(victoria=False):
     pantalla.fill(NEGRO)
-    if fondo:
-        pantalla.blit(fondo, (0, 0))
+    
+    if fondos[nivel-1]:
+        pantalla.blit(fondos[nivel-1], (0, 0))
     
     if victoria:
         titulo = fuente_titulo.render("¡VICTORIA!", True, DORADO)
@@ -558,7 +577,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 80 + (nivel * 100)  # Más puntos por nivel
+    puntos_objetivo = 80 + (nivel * 100)
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
@@ -750,14 +769,16 @@ if pantalla_inicio():
             efecto.actualizar()
             if not efecto.particulas:
                 efectos_particulas.remove(efecto)
-        
-       # Modificar la condición de aparición del jefe:
+
+        # Modificar la condición de aparición del jefe:
         if not jefe_aparecido and jugador.puntos >= puntos_objetivo // 2:
             jefe_aparecido = True
-            enemigos.append(Enemigo(ANCHO//2, -100, "jefe", nivel))
-            enemigos_restantes += 1
-            mostrar_mensaje("¡VIENE EL JEFE!", ROJO, 48, 2)
-        
+            # Spawnear tantos jefes como el nivel actual
+            for _ in range(nivel):
+                enemigos.append(Enemigo(random.randint(0, ANCHO), -100, "jefe", nivel))
+                enemigos_restantes += 1
+            mostrar_mensaje(f"¡VIENEN {nivel} JEFES!", ROJO, 48, 2)
+                
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and enemigos_restantes == 0 and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
@@ -801,11 +822,11 @@ if pantalla_inicio():
             game_over = True
         
         # Dibujado
-        if fondo:
-            pantalla.blit(fondo, (0, 0))
+        if fondos[nivel-1]:  # Usar el fondo correspondiente al nivel (nivel-1 porque la lista empieza en 0)
+            pantalla.blit(fondos[nivel-1], (0, 0))
         else:
             pantalla.fill(NEGRO)
-        
+                
         # Dibujar objetos especiales
         for obj in objetos_especiales:
             obj.dibujar(pantalla)
