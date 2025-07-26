@@ -485,7 +485,7 @@ def pantalla_inicio():
     if fondos[nivel-1]:
         pantalla.blit(fondos[nivel-1], (0, 0))
     
-    titulo = fuente_titulo.render("GALACTIC TREASURE HUNTER", True, DORADO)
+    titulo = fuente_titulo.render("TREASURE HUNTER", True, DORADO)
     subtitulo = fuente_grande.render("Presiona cualquier tecla para comenzar", True, BLANCO)
     controles = fuente_mediana.render("Controles: Flechas para mover, F para disparar, R para mega láser", True, BLANCO)
     objetivo = fuente_mediana.render("Objetivo: Recolecta tesoros y derrota enemigos", True, BLANCO)
@@ -662,7 +662,7 @@ if pantalla_inicio():
             spawn_timer = 0
             
         # Spawnear siempre un mínimo de enemigos, independientemente de enemigos_restantes
-            spawn_cantidad = min(2 + nivel, 7)  # Rango de enemigos según nivel
+            spawn_cantidad = min(2 + nivel, 6)  # Rango de enemigos según nivel
             spawn_enemigos(spawn_cantidad, nivel)
             
             if enemigos_restantes > 0:
@@ -809,9 +809,9 @@ if pantalla_inicio():
                 jugador.energia = jugador.energia_max
                 
                 if nivel % 2 == 0:
-                    jugador.velocidad += 0.5
+                    jugador.velocidad += 1
                     jugador.energia_max += 20
-                    jugador.vidas_max += 10  # Añadir más vida máxima cada 2 niveles
+                    jugador.vidas_max += 20  # Añadir más vida máxima cada 2 niveles
                     jugador.vidas = jugador.vidas_max
                                     
                 mostrar_mensaje(f"Nivel {nivel - 1} completado!", VERDE, 48, 2)
