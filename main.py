@@ -218,7 +218,7 @@ class Enemigo:
         elif tipo == "jefe":
             self.rect = pygame.Rect(x, y, 90, 90)
             self.velocidad = 1
-            self.vida = 15 + nivel * 10 #Vida del jefe aumenta en cada nivel
+            self.vida = 10 + nivel * 5 #Vida del jefe aumenta en cada nivel
             self.color = ROJO
             self.sprite = jefe_img
             self.patron_movimiento = 0
