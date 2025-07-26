@@ -14,6 +14,7 @@ ANCHO, ALTO = 1364, 698  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO), pygame.RESIZABLE)  # Permitir redimensionamiento
 pygame.display.set_caption("Galactic Treasure Hunter")  # Título de la ventana
 FPS = 60 #FPS
+PUNTOS_MAX = 2
 
 # Cargar el icono (asegúrate de que la ruta sea correcta)
 try:
@@ -431,7 +432,7 @@ explosiones = []
 
 # Variables de juego
 nivel = 1
-puntos_objetivo = 50 + (nivel * 50)  # Más puntos por nivel
+puntos_objetivo = PUNTOS_MAX + (nivel * PUNTOS_MAX)  # Más puntos por nivel
 tiempo_inicio_nivel = None
 enemigos_restantes = 0
 spawn_timer = 0
@@ -457,38 +458,27 @@ except:
     pass
 
 def spawn_enemigos(cantidad, nivel_actual):
-    global enemigos_restantes, jefe_aparecido
+    global jefe_aparecido, enemigos_restantes
     
-    # Solo spawnear jefes si se cumplen las condiciones
     if nivel_actual >= 3 and nivel_actual % 2 == 1 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.5:
         jefe_aparecido = True
-        jefes_a_spawnear = 1 #Siempre 1 jefe
+        x = random.randint(100, ANCHO - 100)
+        y = -100
+        jefe = Enemigo(x, y, "jefe", nivel_actual)
+        jefe.efecto_aparicion = EfectoAparicionJefe(x + jefe.rect.width // 2, y + jefe.rect.height // 2)
+        enemigos.append(jefe)
+        enemigos_restantes += 1
         
-        for _ in range(jefes_a_spawnear):
-            x = random.randint(100, ANCHO-100)
-            y = -100  # Aparecen desde arriba
-            
-            # Crear el jefe con efecto especial
-            jefe = Enemigo(x, y, "jefe", nivel_actual)
-            jefe.efecto_aparicion = EfectoAparicionJefe(x + jefe.rect.width//2, y + jefe.rect.height//2)
-            
-            # Sonido especial
-            try:
-                sonido_jefe = mixer.Sound("sounds/jefe_appear.mp3")
-                sonido_jefe.set_volume(0.7)
-                sonido_jefe.play()
-            except:
-                print("No se pudo cargar el sonido de aparición del jefe")
-                            
-            enemigos.append(jefe)
-            enemigos_restantes += jefes_a_spawnear
-            
-            #Detener el tiempo para el jugador
-            jugador.velocidad = 0
-            pygame.time.set_timer(pygame.USEREVENT, 2000)  # Después de 2 seg, restaurar velocidad
+        # Reproduce el sonido del jefe (si existe)
+        try:
+            sonido_jefe = mixer.Sound("sounds/jefe_appear.mp3")
+            sonido_jefe.set_volume(0.7)
+            sonido_jefe.play()
+        except:
+            print("No se pudo cargar el sonido de aparición del jefe")
         
-        mostrar_mensaje(f"¡ALERTA! {jefes_a_spawnear} JEFES SE ACERCAN", ROJO, 48, 3)
-        return
+        # Muestra el mensaje sin bloquear el juego
+        mostrar_mensaje(f"¡ALERTA! JEFE NIVEL {nivel_actual}", ROJO, 48, 3)
     
     # Spawn normal de otros enemigos
     tipos = ["normal"] * (10 - nivel_actual * 2) + ["rapido"] * (7 - nivel_actual) + ["resistente"] * (2 + nivel_actual)
@@ -664,7 +654,7 @@ def reiniciar_juego():
     explosiones = []
     
     nivel = 1
-    puntos_objetivo = 50 + (nivel * 50)
+    puntos_objetivo = PUNTOS_MAX + (nivel * PUNTOS_MAX)
     tiempo_inicio_nivel = None
     enemigos_restantes = 0
     spawn_timer = 0
@@ -693,8 +683,8 @@ if pantalla_inicio():
             if evento.type == pygame.QUIT:
                 ejecutando = False
                 
-            elif evento.type == pygame.USEREVENT:
-                jugador.velocidad = 5
+         #   elif evento.type == pygame.USEREVENT:
+          #      jugador.velocidad = 5
                 
             elif evento.type == pygame.KEYDOWN:
                 
@@ -750,12 +740,12 @@ if pantalla_inicio():
         # Iniciar nivel si no se ha hecho
         if not nivel_iniciado:
             tiempo_inicio_nivel = time.time()
-            spawn_enemigos(5 + nivel * 2, nivel)
+            spawn_enemigos(3 + nivel * 2, nivel) #Cantidad de enemigos
             nivel_iniciado = True
         
         # Spawn de enemigos periódico
         spawn_timer += 1/FPS
-        if spawn_timer >= 3 and len(enemigos) < 10:
+        if spawn_timer >= 4 and len(enemigos) < 10:
             spawn_timer = 0
             spawn_enemigos(spawn_cantidad, nivel)
                     
@@ -888,7 +878,7 @@ if pantalla_inicio():
             if nivel < 5:
                 nivel += 1
                 enemigos_restantes = 0
-                puntos_objetivo += 50 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
+                puntos_objetivo += PUNTOS_MAX #Se cambia que tanto aumenta los puntos objetivos en cada nivel
                 # Esperar a que terminen efectos antes de limpiar
                 while any(ef.particulas for ef in efectos_particulas):
                     # Dibujar efectos restantes
