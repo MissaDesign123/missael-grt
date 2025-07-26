@@ -218,7 +218,7 @@ class Enemigo:
         elif tipo == "jefe":
             self.rect = pygame.Rect(x, y, 80, 80)
             self.velocidad = 1
-            self.vida = 20 + nivel * 20 #Vida del jefe aumenta en cada nivel
+            self.vida = 15 + nivel * 10 #Vida del jefe aumenta en cada nivel
             self.color = ROJO
             self.sprite = jefe_img
             self.patron_movimiento = 0
@@ -408,7 +408,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
         # Añadir jefes según el nivel
         tipos += ["jefe"] * jefes_por_nivel
-    
+       
     for _ in range(cantidad):
         tipo = random.choice(tipos) #Se elige el tipo de enemigo de manera aleatoria
         
