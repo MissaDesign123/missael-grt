@@ -750,6 +750,8 @@ if pantalla_inicio():
         # Actualizar enemigos
         for enemigo in enemigos[:]:
             enemigo.mover_hacia(jugador.rect)
+            if enemigo.efecto_aparicion:
+                enemigo.efecto_aparicion.actualizar()    
             
             # Disparar
             nuevos_lasers = enemigo.disparar(jugador.rect)
