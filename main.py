@@ -455,9 +455,9 @@ def spawn_enemigos(cantidad, nivel_actual):
     global enemigos_restantes, jefe_aparecido
     
     # Solo spawnear jefes si se cumplen las condiciones
-    if nivel_actual >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.7:
+    if nivel_actual >= 3 and nivel_actual % 2 == 1 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.5:
         jefe_aparecido = True
-        jefes_a_spawnear = min(nivel_actual - 1, 3)  # Máximo 3 jefes
+        jefes_a_spawnear = 1 #Siempre 1 jefe
         
         for _ in range(jefes_a_spawnear):
             x = random.randint(100, ANCHO-100)
