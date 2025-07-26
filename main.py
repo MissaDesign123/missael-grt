@@ -413,7 +413,7 @@ def spawn_enemigos(cantidad, nivel_actual):
         tipo = random.choice(tipos)
         if tipo == "jefe" and (jefe_aparecido and not jefe_derrotado):
             # Si ya hay un jefe activo y no ha sido derrotado, no spawnear otro
-            tipo = random.choice(["normal", "resistente"])
+            tipo = random.choice(["normal", "resistente", "rapido"])
             
         x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
         y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
