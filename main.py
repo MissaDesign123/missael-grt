@@ -10,7 +10,7 @@ pygame.init()
 mixer.init()
 
 # Configuración de pantalla
-ANCHO, ALTO = 1280, 648  # Pantalla más grande
+ANCHO, ALTO = 1364, 698  # Pantalla más grande
 pantalla = pygame.display.set_mode((ANCHO, ALTO), pygame.RESIZABLE)  # Permitir redimensionamiento
 pygame.display.set_caption("Galactic Treasure Hunter")  # Título de la ventana
 FPS = 60 #FPS
