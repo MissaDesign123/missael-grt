@@ -707,7 +707,7 @@ if pantalla_inicio():
                             
                         enemigos_restantes -= 1
                             
-                        jugador.puntos += 1 if enemigo.tipo != "jefe" else 3
+                        jugador.puntos += 3 if enemigo.tipo == "jefe" else 1
                         
                         explosiones.append(EfectoParticula(
                             enemigo.rect.centerx, enemigo.rect.centery,
