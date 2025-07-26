@@ -767,12 +767,6 @@ if pantalla_inicio():
             tiempo_ultimo_tesoro = time.time()
             if random.random() < 0.7:
                 spawn_objeto_especial()
-                
-        # Actualizar enemigos
-        for enemigo in enemigos[:]:
-            enemigo.mover_hacia(jugador.rect)
-            if enemigo.efecto_aparicion:
-                enemigo.efecto_aparicion.actualizar()    
             
             # Disparar
             nuevos_lasers = enemigo.disparar(jugador.rect)
