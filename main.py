@@ -680,6 +680,7 @@ if pantalla_inicio():
     ejecutando = True
     reloj = pygame.time.Clock()
     nivel_iniciado = False
+    spawn_cantidad = min(nivel, 6)
     
     while ejecutando:
         reloj.tick(FPS) 
@@ -700,7 +701,9 @@ if pantalla_inicio():
                 if evento.key == pygame.K_p and not game_over and not victoria:
                     if not pantalla_pausa():
                         ejecutando = False
-                        
+                    else:
+                        continue        
+                            
                 elif evento.key == pygame.K_r:  # Tecla R para superláser
                     nuevos_lasers = jugador.disparar_superlaser()
                     lasers_jugador.extend(nuevos_lasers)
@@ -752,9 +755,10 @@ if pantalla_inicio():
         
         # Spawn de enemigos periódico
         spawn_timer += 1/FPS
-        if spawn_timer >= 3:  
+        if spawn_timer >= 3 and len(enemigos) < 10:
             spawn_timer = 0
-            
+            spawn_enemigos(spawn_cantidad, nivel)
+                    
         # Spawnear siempre un mínimo de enemigos, independientemente de enemigos_restantes
             spawn_cantidad = min(nivel, 6)  # Rango de enemigos según nivel
             spawn_enemigos(spawn_cantidad, nivel)
@@ -767,6 +771,10 @@ if pantalla_inicio():
             tiempo_ultimo_tesoro = time.time()
             if random.random() < 0.7:
                 spawn_objeto_especial()
+            
+         # Actualizar enemigos
+        for enemigo in enemigos[:]:
+            enemigo.mover_hacia(jugador.rect)
             
             # Disparar
             nuevos_lasers = enemigo.disparar(jugador.rect)
@@ -879,6 +887,7 @@ if pantalla_inicio():
         if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
                 nivel += 1
+                enemigos_restantes = 0
                 puntos_objetivo += 50 #Se cambia que tanto aumenta los puntos objetivos en cada nivel
                 # Esperar a que terminen efectos antes de limpiar
                 while any(ef.particulas for ef in efectos_particulas):
