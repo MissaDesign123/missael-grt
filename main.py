@@ -692,10 +692,15 @@ if pantalla_inicio():
                         laser["rect"].centerx, laser["rect"].centery, 
                         laser["color"], 10, 2
                     ))
+                    # Actualizar enemigos_restantes cuando se elimina un enemigo
                     if enemigo.vida <= 0:
-                        enemigos.remove(enemigo)
+                        enemigos.remove(enemigo)                        
+                        if enemigo.tipo == "jefe":
+                            jefe_derrotado = True
+                            
                         enemigos_restantes -= 1
-                        jugador.puntos += 1 if enemigo.tipo != "jefe" else 5
+                            
+                        jugador.puntos += 1 if enemigo.tipo != "jefe" else 3
                         
                         explosiones.append(EfectoParticula(
                             enemigo.rect.centerx, enemigo.rect.centery,
