@@ -171,8 +171,8 @@ class Jugador:
             self.escudo_activo = False
             
     def disparar_superlaser(self):
-        if self.energia >= 30:  # Coste alto de energía
-            self.energia -= 30
+        if self.energia >= 15: #Coste del superlaser
+            self.energia -= 15
             lasers = []
             # Disparar un láser más grande y poderoso
             for i in range(-1, 9):  # cantidad de laseres en un pequeño abanico
@@ -290,7 +290,7 @@ class Enemigo:
                 # Fondo de la barra
                 pygame.draw.rect(pantalla, (50, 50, 50), (self.rect.x - 10, self.rect.y - 20, self.rect.width + 20, 10))
                 # Barra de vida principal
-                vida_porcentaje = self.vida / (15 + self.nivel * 10)
+                vida_porcentaje = self.vida / (10 + self.nivel * 5)
                 pygame.draw.rect(pantalla, ROJO, (self.rect.x - 10, self.rect.y - 20, (self.rect.width + 20) * vida_porcentaje, 8))
                 # Borde resaltado
                 pygame.draw.rect(pantalla, BLANCO, (self.rect.x - 10, self.rect.y - 20, self.rect.width + 20, 10), 2)
@@ -452,54 +452,51 @@ except:
     pass
 
 def spawn_enemigos(cantidad, nivel_actual):
-    global enemigos_restantes
+    global enemigos_restantes, jefe_aparecido
     
-    # Disminuir la cantidad de enemigos normales
-    cantidad = max(3, 5 + nivel_actual - 2)  # Menos enemigos que antes
-    
-     # Aumenta la probabilidad de enemigos resistentes en niveles altos
-    if nivel_actual >= 3:
-        tipos = ["normal"] * 30 + ["resistente"] * 15 + ["rapido"] * 5 + ["jefe"] * 25
-    else:
-        tipos = ["normal"] * 50 + ["resistente"] * 20  + ["rapido"] * 10
-    
-    if nivel_actual >= 2 and jugador.puntos >= puntos_objetivo * 0.7 and not any(e.tipo == "jefe" for e in enemigos):
-        jefes_a_spawnear = min(nivel_actual - 1, 3)
+    # Solo spawnear jefes si se cumplen las condiciones
+    if nivel_actual >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.7:
+        jefe_aparecido = True
+        jefes_a_spawnear = min(nivel_actual - 1, 3)  # Máximo 3 jefes
+        
         for _ in range(jefes_a_spawnear):
             x = random.randint(100, ANCHO-100)
             y = -100  # Aparecen desde arriba
             
-            # Crear el jefe
+            # Crear el jefe con efecto especial
             jefe = Enemigo(x, y, "jefe", nivel_actual)
             jefe.efecto_aparicion = EfectoAparicionJefe(x + jefe.rect.width//2, y + jefe.rect.height//2)
             
-            # Sonido especial para jefe (si tienes uno)
+            # Sonido especial
             try:
                 sonido_jefe = mixer.Sound("sounds/jefe_appear.mp3")
+                sonido_jefe.set_volume(0.7)
                 sonido_jefe.play()
             except:
-                pass
-                
+                print("No se pudo cargar el sonido de aparición del jefe")
+                            
             enemigos.append(jefe)
-            enemigos_restantes += 1
+            enemigos_restantes += jefes_a_spawnear
         
         mostrar_mensaje(f"¡ALERTA! {jefes_a_spawnear} JEFES SE ACERCAN", ROJO, 48, 3)
         return
-
+    
     # Spawn normal de otros enemigos
+    tipos = ["normal"] * (10 - nivel_actual * 2) + ["rapido"] * (7 - nivel_actual) + ["resistente"] * (2 + nivel_actual)
+    
     for _ in range(cantidad):
         tipo = random.choice(tipos)
         x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
         y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
         
-        # Asegurarse de que no aparezca demasiado cerca del jugador
+        # Evitar spawn cerca del jugador
         while math.hypot(x - jugador.rect.centerx, y - jugador.rect.centery) < 200:
             x = random.choice([-50, ANCHO+50, random.randint(0, ANCHO)])
             y = random.choice([-50, ALTO+50, random.randint(0, ALTO)])
             
         enemigos.append(Enemigo(x, y, tipo, nivel_actual))
-          
-    # Actualizar enemigos_restantes SOLO al inicio del nivel
+    
+    # Actualizar contador solo al inicio del nivel
     if tiempo_inicio_nivel is None:
         enemigos_restantes = cantidad
         
@@ -686,7 +683,7 @@ if pantalla_inicio():
                     nuevos_lasers = jugador.disparar_superlaser()
                     lasers_jugador.extend(nuevos_lasers)
                     
-                elif evento.key == pygame.K_f and jugador.energia >= 10:
+                elif evento.key == pygame.K_f and jugador.energia >= 5:
                     # Disparar 3 láseres en un pequeño abanico
                     for i in range(-1, 3):  # Esto creará la cantidad de disparos 
                         angulo = math.radians(i * 30)  # Pequeña desviación para cada láser
@@ -703,7 +700,7 @@ if pantalla_inicio():
                         
                         lasers_jugador.append(laser)
                     
-                    jugador.energia -= 2  # Coste de energía por el conjunto de disparos
+                    jugador.energia -= 1  # Coste de energía por el conjunto de disparos
                     jugador.disparo_cooldown = 0
                     if sonido_laser:
                         sonido_laser.play()
@@ -740,7 +737,7 @@ if pantalla_inicio():
             spawn_enemigos(spawn_cantidad, nivel)
             
             if enemigos_restantes > 0:
-                spawn_enemigos(min(1, nivel), nivel)
+                spawn_enemigos(min(1, enemigos_restantes), nivel)
         
         # Spawn de tesoros y power-ups
         if time.time() - tiempo_ultimo_tesoro > 5:  # Cada 5 segundos
@@ -769,11 +766,7 @@ if pantalla_inicio():
                     ))
                     # Actualizar enemigos_restantes cuando se elimina un enemigo
                     if enemigo.vida <= 0:
-                        enemigos.remove(enemigo)                              
-                        enemigos_restantes -= 1
-                            
-                        jugador.puntos += 3 if enemigo.tipo == "jefe" else 1
-                        
+                        enemigos.remove(enemigo)                        
                         explosiones.append(EfectoParticula(
                             enemigo.rect.centerx, enemigo.rect.centery,
                             enemigo.color, 30, 4
@@ -783,9 +776,14 @@ if pantalla_inicio():
                             sonido_explosion.play()
                         if enemigo.tipo == "jefe":
                             jefe_derrotado = True
+                            # Recompensas por derrotar jefe
                             spawn_objeto_especial("powerup")
                             spawn_objeto_especial("powerup")
                             spawn_objeto_especial("vida")
+                            
+                        enemigos_restantes -= 1                            
+                        jugador.puntos += 3 if enemigo.tipo == "jefe" else 1
+                        
                         break
         
         # Actualizar láseres del jugador
@@ -850,16 +848,10 @@ if pantalla_inicio():
             efecto.actualizar()
             if not efecto.particulas:
                 efectos_particulas.remove(efecto)
-
-        # Modificar la condición de aparición del jefe:
-        if nivel >= 2 and not jefe_aparecido and jugador.puntos >= puntos_objetivo * 0.7:  # 70% del objetivo
-            jefe_aparecido = True
-            # Spawnear 1 jefe en nivel 2, 2 en nivel 3, etc.
-            for _ in range(min(nivel-1, 3)):  # Máximo 3 jefes
-                enemigos.append(Enemigo(random.randint(0, ANCHO), -100, "jefe", nivel))
-                enemigos_restantes += 1
-            mostrar_mensaje(f"¡VIENEN {min(nivel-1, 3)} JEFES!", ROJO, 48, 2)
-       
+                
+        #Llamado a jefes
+        spawn_enemigos(5 + nivel * 2, nivel)
+        
         # Verificar fin de nivel
         if (jugador.puntos >= puntos_objetivo and not jefe_aparecido) or jefe_derrotado:
             if nivel < 5:
