@@ -199,7 +199,8 @@ class Enemigo:
         self.tipo = tipo
         self.tiempo_aparicion = time.time()  # Nuevo: registrar tiempo de aparición
         self.efecto_aparicion = None  # Nuevo: efecto especial de aparición
-            
+        self.nivel = nivel
+                    
         if tipo == "normal":
             self.rect = pygame.Rect(x, y, 50, 50)
             self.velocidad = 2 + nivel * 0.1  # Aumenta velocidad por nivel
@@ -768,10 +769,7 @@ if pantalla_inicio():
                     ))
                     # Actualizar enemigos_restantes cuando se elimina un enemigo
                     if enemigo.vida <= 0:
-                        enemigos.remove(enemigo)                        
-                        if enemigo.tipo == "jefe":
-                            jefe_derrotado = True
-                            
+                        enemigos.remove(enemigo)                              
                         enemigos_restantes -= 1
                             
                         jugador.puntos += 3 if enemigo.tipo == "jefe" else 1
@@ -780,6 +778,7 @@ if pantalla_inicio():
                             enemigo.rect.centerx, enemigo.rect.centery,
                             enemigo.color, 30, 4
                         ))
+                        
                         if sonido_explosion:
                             sonido_explosion.play()
                         if enemigo.tipo == "jefe":
