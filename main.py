@@ -57,7 +57,7 @@ try:
     meteoro_img = pygame.image.load("imgs/obstaculo.png")
     meteoro_img = pygame.transform.scale(meteoro_img, (40, 40))
     nave_img = pygame.image.load("imgs/nave.png")
-    nave_img = pygame.transform.scale(nave_img, (60, 60))
+    nave_img = pygame.transform.scale(nave_img, (70, 70))
     enemigo_img = pygame.image.load("imgs/enemigo.png")
     enemigo_img = pygame.transform.scale(enemigo_img, (60, 60))
     enemigo_2_img = pygame.image.load("imgs/enemigo_2.png")  # Corregir si hay typo en el nombre del archivo
@@ -402,7 +402,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
     
     # Crear lista de tipos de enemigos
-    tipos = ["normal"] * (60 - nivel_actual * 10) + ["rapido"] * (40 - nivel_actual * 6) + ["resistente"] * (20 + nivel_actual * 2)
+    tipos = ["normal"] * (50 - nivel_actual * 10) + ["rapido"] * (30 - nivel_actual * 6) + ["resistente"] * (20 + nivel_actual * 2)
     
     # Añadir jefes solo si estamos en la segunda mitad del nivel
     if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
