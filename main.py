@@ -198,13 +198,13 @@ class Enemigo:
     def __init__(self, x, y, tipo="normal", nivel=1):
         self.tipo = tipo
         if tipo == "normal":
-            self.rect = pygame.Rect(x, y, 40, 40)
+            self.rect = pygame.Rect(x, y, 50, 50)
             self.velocidad = 2 + nivel * 0.1  # Aumenta velocidad por nivel
             self.vida = 2
             self.color = MORADO
             self.sprite = enemigo_img
         elif tipo == "rapido":
-            self.rect = pygame.Rect(x, y, 30, 30)
+            self.rect = pygame.Rect(x, y, 50, 50)
             self.velocidad = 3 + nivel * 0.15
             self.vida = 3
             self.color = ROSA
@@ -216,7 +216,7 @@ class Enemigo:
             self.color = NARANJA
             self.sprite = enemigo_3_img
         elif tipo == "jefe":
-            self.rect = pygame.Rect(x, y, 80, 80)
+            self.rect = pygame.Rect(x, y, 90, 90)
             self.velocidad = 1
             self.vida = 15 + nivel * 10 #Vida del jefe aumenta en cada nivel
             self.color = ROJO
