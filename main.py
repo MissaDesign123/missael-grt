@@ -402,7 +402,7 @@ def spawn_enemigos(cantidad, nivel_actual):
     jefes_por_nivel = nivel_actual  # 1 jefe en nivel 1, 2 en nivel 2, etc.
     
     # Crear lista de tipos de enemigos
-    tipos = ["normal"] * (30 - nivel_actual * 5) + ["rapido"] * (20 - nivel_actual * 3) + ["resistente"] * (10 + nivel_actual * 2)
+    tipos = ["normal"] * (25 - nivel_actual * 5) + ["rapido"] * (15 - nivel_actual * 3) + ["resistente"] * (5 + nivel_actual * 2)
     
     # Añadir jefes solo si estamos en la segunda mitad del nivel
     if nivel_actual >= 1 and (not jefe_aparecido or jefe_derrotado):
