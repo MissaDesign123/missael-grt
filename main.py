@@ -193,10 +193,13 @@ class Jugador:
                 sonido_laser.play()  # O usa un sonido diferente para el superláser
             return lasers
         return []
-
+    
 class Enemigo:
     def __init__(self, x, y, tipo="normal", nivel=1):
         self.tipo = tipo
+        self.tiempo_aparicion = time.time()  # Nuevo: registrar tiempo de aparición
+        self.efecto_aparicion = None  # Nuevo: efecto especial de aparición
+            
         if tipo == "normal":
             self.rect = pygame.Rect(x, y, 50, 50)
             self.velocidad = 2 + nivel * 0.1  # Aumenta velocidad por nivel
@@ -267,17 +270,33 @@ class Enemigo:
         return []
         
     def dibujar(self, pantalla):
-        if self.sprite:
-            pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
-        else:
-            pygame.draw.rect(pantalla, self.color, self.rect)
+            # Mostrar efecto de aparición si existe
+            if self.efecto_aparicion and time.time() - self.tiempo_aparicion < 2:  # Mostrar por 2 segundos
+                self.efecto_aparicion.dibujar(pantalla)
             
-        # Barra de vida para enemigos resistentes y jefes
-        if self.tipo in ["resistente", "jefe"]:
-            ancho_barra = 40 if self.tipo == "resistente" else 80
-            vida_porcentaje = self.vida / (3 if self.tipo == "resistente" else 10)
-            pygame.draw.rect(pantalla, ROJO, (self.rect.x, self.rect.y - 10, ancho_barra, 5))
-            pygame.draw.rect(pantalla, VERDE, (self.rect.x, self.rect.y - 10, ancho_barra * vida_porcentaje, 5))
+            if self.sprite:
+                # Si es un jefe y está apareciendo, hacerlo parpadear
+                if self.tipo == "jefe" and time.time() - self.tiempo_aparicion < 2:
+                    if int((time.time() - self.tiempo_aparicion) * 5) % 2 == 0:  # Parpadeo rápido
+                        pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
+                else:
+                    pantalla.blit(self.sprite, (self.rect.x, self.rect.y))
+            else:
+                pygame.draw.rect(pantalla, self.color, self.rect)
+                
+            # Barra de vida mejorada para jefes
+            if self.tipo == "jefe":
+                # Fondo de la barra
+                pygame.draw.rect(pantalla, (50, 50, 50), (self.rect.x - 10, self.rect.y - 20, self.rect.width + 20, 10))
+                # Barra de vida principal
+                vida_porcentaje = self.vida / (15 + self.nivel * 10)
+                pygame.draw.rect(pantalla, ROJO, (self.rect.x - 10, self.rect.y - 20, (self.rect.width + 20) * vida_porcentaje, 8))
+                # Borde resaltado
+                pygame.draw.rect(pantalla, BLANCO, (self.rect.x - 10, self.rect.y - 20, self.rect.width + 20, 10), 2)
+                
+                # Texto con el nombre del jefe
+                texto_jefe = fuente_pequena.render(f"JEFE NIVEL {self.nivel}", True, BLANCO)
+                pantalla.blit(texto_jefe, (self.rect.centerx - texto_jefe.get_width()//2, self.rect.y - 40))
 
 class ObjetoEspecial:
     def __init__(self, tipo, x=None, y=None):
